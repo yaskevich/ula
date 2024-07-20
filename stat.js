@@ -23,7 +23,20 @@ csvArr.forEach(x => {
 
 const sorted = Object.entries(counter).sort(([, a], [, b]) => b - a);
 // console.log(sorted);
-console.log(sorted.filter(x => x[1] > 1).forEach(
-    // x => console.log(`${String(x[0]).padEnd(20, ' ')}${String(x[1]).padStart(6, ' ')}`)
-    x => console.log(`${x[0]}\t${x[1]}`)
-));
+// console.log(sorted.filter(x => x[1] > 1).forEach(
+//     // x => console.log(`${String(x[0]).padEnd(20, ' ')}${String(x[1]).padStart(6, ' ')}`)
+//     x => console.log(`${x[0]}\t${x[1]}`)
+// ));
+
+const table = sorted.filter(x => x[1] > 1).map(
+    // x => ${String(x[0]).padEnd(20, ' ')}${String(x[1]).padStart(6, ' ')}`
+    x => `${x[0]}\t${x[1]}`
+).join('\n');
+
+try {
+    fs.writeFileSync('./data/freq.json', JSON.stringify(sorted, null, 2));
+    fs.writeFileSync('./data/freq.csv', table);
+} catch (error) {
+    console.log("Writing files: FAIL", error);
+}
+console.log("done!");
