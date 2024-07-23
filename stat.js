@@ -7,16 +7,20 @@ import csv from 'async-csv';
 
 const curDir = path.dirname(fileURLToPath(import.meta.url));
 const fileName = 'ULIC_Urzedowy_2024-06-23.csv';
-const csvContent = fs.readFileSync(path.join(curDir, 'data', fileName), 'utf-8');
+const csvContent = fs.readFileSync(path.join(curDir, 'data', fileName), 'utf-8').replace(/[\u200B-\u200D\uFEFF]/g, '');
 const csvArr = await csv.parse(csvContent, { delimiter: ';', columns: true, skip_empty_lines: true, quote: null });
 const counter = {};
+
+const loc = {};
 
 csvArr.forEach(x => {
     const item = x.NAZWA_1;
     if (counter[item]) {
         counter[item] += 1;
+        loc[item].push(x.WOJ);
     } else {
         counter[item] = 1;
+        loc[item] = [x.WOJ];
     }
 }
 );
@@ -30,7 +34,7 @@ const sorted = Object.entries(counter).sort(([, a], [, b]) => b - a);
 
 const table = sorted.filter(x => x[1] > 1).map(
     // x => ${String(x[0]).padEnd(20, ' ')}${String(x[1]).padStart(6, ' ')}`
-    x => `${x[0]}\t${x[1]}`
+    x => `${x[0]}\t${x[1]}\t${[...new Set(loc[x[0]])]}`
 ).join('\n');
 
 try {
