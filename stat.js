@@ -14,7 +14,12 @@ const counter = {};
 const loc = {};
 
 csvArr.forEach(x => {
-    const item = x.NAZWA_1;
+    let item = x.NAZWA_1;
+    if (item.includes('Jana Pawła')){
+        item = "Jana Pawła II";
+    } else if (item.includes('Piłsudskiego')){
+        item = "Piłsudskiego";
+    }
     if (counter[item]) {
         counter[item] += 1;
         loc[item].push(x.WOJ);
@@ -32,13 +37,19 @@ const sorted = Object.entries(counter).sort(([, a], [, b]) => b - a);
 //     x => console.log(`${x[0]}\t${x[1]}`)
 // ));
 
+
+
+const count = (arr) => arr.reduce((acc, curr) => (acc[curr] = (acc[curr] || 0) + 1, acc), {});
+const objects = sorted.map(x => ({[x[0]]: { name: x[0], freq: x[1], regions: count (loc[x[0]]) }})); 
+// process.exit();
+
 const table = sorted.filter(x => x[1] > 1).map(
     // x => ${String(x[0]).padEnd(20, ' ')}${String(x[1]).padStart(6, ' ')}`
     x => `${x[0]}\t${x[1]}\t${[...new Set(loc[x[0]])]}`
 ).join('\n');
 
 try {
-    fs.writeFileSync('./data/freq.json', JSON.stringify(sorted, null, 2));
+    fs.writeFileSync('./data/freq.json', JSON.stringify(objects, null, 2));
     fs.writeFileSync('./data/freq.csv', table);
 } catch (error) {
     console.log("Writing files: FAIL", error);
