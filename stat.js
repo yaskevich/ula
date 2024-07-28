@@ -13,43 +13,50 @@ const counter = {};
 
 const loc = {};
 
+const wojs = {};
+
 csvArr.forEach(x => {
+    const woj = String(Number(x.WOJ));
+
+    if (wojs[woj]) {
+        wojs[woj] += 1;
+    } else {
+        wojs[woj] = 1;
+    }
+
     let item = x.NAZWA_1;
-    if (item.includes('Jana Pawła')){
+    if (item.includes('Jana Pawła')) {
         item = "Jana Pawła II";
-    } else if (item.includes('Piłsudskiego')){
+    } else if (item.includes('Piłsudskiego')) {
         item = "Piłsudskiego";
     }
+
     if (counter[item]) {
         counter[item] += 1;
-        loc[item].push(x.WOJ);
+        loc[item].push(woj);
     } else {
         counter[item] = 1;
-        loc[item] = [x.WOJ];
+        loc[item] = [woj];
     }
 }
 );
 
-const sorted = Object.entries(counter).sort(([, a], [, b]) => b - a);
-// console.log(sorted);
-// console.log(sorted.filter(x => x[1] > 1).forEach(
-//     // x => console.log(`${String(x[0]).padEnd(20, ' ')}${String(x[1]).padStart(6, ' ')}`)
-//     x => console.log(`${x[0]}\t${x[1]}`)
-// ));
-
-
-
-const count = (arr) => arr.reduce((acc, curr) => (acc[curr] = (acc[curr] || 0) + 1, acc), {});
-const objects = sorted.map(x => ({[x[0]]: { name: x[0], freq: x[1], regions: count (loc[x[0]]) }})); 
+// console.log(wojs);
 // process.exit();
 
+const sorted = Object.entries(counter).sort(([, a], [, b]) => b - a);
+const count = (arr) => arr.reduce((acc, curr) => (acc[curr] = (acc[curr] || 0) + 1, acc), {});
+const objects = sorted.map(x => ({ [x[0]]: { name: x[0], freq: x[1], regions: Object.fromEntries(Object.entries(count(loc[x[0]])).map((item) => [[item[0]], [item[1], Number((item[1] / wojs[item[0]] * 100).toFixed(1) || 0)]])) } }));
 const table = sorted.filter(x => x[1] > 1).map(
     // x => ${String(x[0]).padEnd(20, ' ')}${String(x[1]).padStart(6, ' ')}`
-    x => `${x[0]}\t${x[1]}\t${[...new Set(loc[x[0]])]}`
+    x => `${x[0]}\t${x[1]}`
 ).join('\n');
 
 try {
-    fs.writeFileSync('./data/freq.json', JSON.stringify(objects, null, 2));
+    fs.writeFileSync('./data/freq.json', JSON.stringify({
+        regions: wojs,
+        streets: objects
+    }, null, 2));
     fs.writeFileSync('./data/freq.csv', table);
 } catch (error) {
     console.log("Writing files: FAIL", error);
