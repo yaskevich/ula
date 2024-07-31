@@ -33,7 +33,88 @@ const svgRef = ref(null);
 const mapRef = ref<HTMLElement | null>(null);
 
 const streetObject = ref<IStreetInfo>();
-const getCount = (id: number) => streetObject.value?.regions?.[id] || 0;
+const getCounts = (id: number) => streetObject.value?.regions?.[id] || [0, 0];
+
+
+const serializeSVG = (svg: HTMLElement | SVGElement) => {
+  const xmlns = 'http://www.w3.org/2000/xmlns/';
+  const xlinkns = 'http://www.w3.org/1999/xlink';
+  const svgns = 'http://www.w3.org/2000/svg';
+  return function serialize() {
+    // console.log("svg source", svg);
+    (svg as Node) = svg.cloneNode(true);
+    const fragment = window.location.href + '#';
+    const walker = document.createTreeWalker(svg, NodeFilter.SHOW_ELEMENT);
+    while (walker.nextNode()) {
+      for (const attr of (walker.currentNode as Element).attributes) {
+        if (attr.value.includes(fragment)) {
+          attr.value = attr.value.replace(fragment, '#');
+        }
+      }
+    }
+    svg.setAttributeNS(xmlns, 'xmlns', svgns);
+    svg.setAttributeNS(xmlns, 'xmlns:xlink', xlinkns);
+    // const { width, height } = resizeState.dimensions;
+    const width = 600, height = 400;
+
+    svg.setAttribute('viewBox', `-10 -10 ${width + 20} ${height + 40}`);
+    const serializer = new window.XMLSerializer();
+    const string = serializer.serializeToString(svg);
+    return new Blob([string], { type: 'image/svg+xml' });
+  };
+};
+
+const renderImage = (svg: HTMLElement) => {
+  let resolve, reject = null;
+  const promise = new Promise((y, n) => ((resolve = y), (reject = n)));
+  const image = new Image();
+  image.onerror = reject;
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  const link = document.createElement('a');
+  // const filename = tkn + '-' + store.getFormattedTime();
+  const filename = "test.png";
+
+  image.onload = () => {
+    const rect = svg.getBoundingClientRect();
+    canvas.width = rect.width * 4;
+    canvas.height = rect.height * 4;
+    // canvas.font = "Open Sans";
+    if (context) {
+      context.font = "Open Sans";
+      context.fillStyle = '#F1F1EF';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, rect.width * 4, rect.height * 4);
+
+      context.canvas.toBlob(function (blob) {
+        if (blob) {
+          var url = URL.createObjectURL(blob);
+          link.download = filename + '.png';
+          link.href = url;
+          // console.log('link', link.href);
+          link.click();
+          URL.revokeObjectURL(url);
+        }
+      });
+    }
+    // console.log('on load');
+  };
+
+  const serializedSVG = serializeSVG(svg);
+  // console.log("svg:serialized", serializedSVG());
+  const url = URL.createObjectURL(serializedSVG());
+  link.download = filename + '.svg';
+  image.src = url;
+  link.href = url;
+  // link.click();
+  return promise;
+};
+
+const chartClicked = async () => {
+  if (svgRef.value) {
+    await renderImage(svgRef.value);
+  }
+};
 
 const curIndex = ref(0);
 
@@ -41,7 +122,7 @@ const loadStreet = () => {
 
   let svg = d3.select(svgRef.value);
 
-  svg.selectAll("*").remove();
+  svg.select(".carta").remove();
   const parentNode = d3.select(mapRef.value).node();
 
   if (parentNode !== null) {
@@ -57,31 +138,42 @@ const loadStreet = () => {
     .scale(svgWidth.value / Math.PI * 16)
     .translate([svgWidth.value >> 1, svgHeight.value >> 1]);
 
-  streetObject.value = Object.values(store.freq[curIndex.value])?.[0] as IStreetInfo;
+  streetObject.value = Object.values(store.freq.streets[curIndex.value])?.[0] as IStreetInfo;
 
-  const last = d3.max(Object.values(streetObject.value.regions));
-  const colorize = d3.scaleLinear<string>().domain([0, last]).clamp(true).range(['#f1eef6', '#0570b0']);
+  const values = Object.values(streetObject.value.regions).map(x => x[1]);
+  const ext = d3.extent(values) as Array<number>;
+  // console.log("last", last);
+  const last = ext[1];
+  if (ext[0] !== undefined && ext[1] !== undefined) {
+    const colorize = d3.scaleLinear<string>().domain(ext).clamp(true).range(['#f1eef6', '#0570b0']);
 
   legendCellWidth = (svgWidth.value - legendRightMargin) / last;
+    const carta = svg.append("g").classed('carta', true);
+    carta.append("g")
+      // .   attr('x', '550px')
+      // .attr("y", '150px')
+      // .attr("transform", `translate(150,0)`)
 
-  svg.append("g")
+
     .selectAll("path")
     .data(store.geofeatures)
     .join("path")
+      .style("stroke", 'silver')
     .classed('district', true)
     .attr('fill', (d: any) => {
-      return colorize(getCount(d.properties.terytId));
+        return colorize(getCounts(d.properties.terytId)[1]);
     })
     .attr("d", d3.geoPath().projection(projection) as any)
     .on("mouseover", (e, d: any) => {
       unit.value = d.properties.nazwa + ' w-wo';
-      num.value = getCount(d.properties.terytId);
+        const counts = getCounts(d.properties.terytId);
+        num.value = `${counts[0]} ≈ ${counts[1]}%`;
     })
     .on("mouseout", function () {
       unit.value = num.value = '';
     });
 
-  const legend = svg.append('g');
+    const legend = carta.append('g');
 
   legend
     .selectAll('.legend')
@@ -91,12 +183,16 @@ const loadStreet = () => {
     .attr("y", legendOffsetY)
     .attr("width", legendCellWidth)
     .attr("height", legendHeight)
-    .attr('fill', d => colorize(d));
+      .attr('fill', d => {
+        // console.log(d, colorize(d));
+        return colorize(d)
+      });
 
   legend
     .append("g")
     .attr("transform", `translate(${legendOffsetX},${legendOffsetY + legendHeight})`)
-    .call(d3.axisBottom(d3.scaleLinear().domain([0, last]).range([0, last * legendCellWidth])).ticks(Math.round(last / 100)));
+      .call(d3.axisBottom(d3.scaleLinear().domain([0, last]).clamp(true).range([ext[0], last * legendCellWidth])).ticks(4)); // Math.round(last / 5)
+  }
 };
 
 const loadNext = () => {
@@ -117,12 +213,18 @@ onMounted(() => loadStreet());
 
 <style scoped lang="scss">
 :deep(.district) {
-  stroke: silver;
+  // stroke: silver;
 
   &:hover {
     fill: #fbd0da;
   }
 }
+
+:deep(.street) {
+  fill: #0f4260;
+  font-size: 1.5em;
+}
+
 
 :deep(.title) {
   /* fill: #2196f3;
