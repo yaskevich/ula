@@ -1,16 +1,19 @@
 <template>
-  <h3>{{ streetObject?.name }} [{{ streetObject?.freq }}]</h3>
-  <ButtonGroup>
-    <Button @click="loadPrevious" :disabled="!curIndex" icon="pi pi-arrow-left"></Button>
-    <Button @click="loadNext" icon="pi pi-arrow-right"></Button>
-  </ButtonGroup>
-
+  <!-- <h3>{{ streetObject?.name }} [{{ streetObject?.freq }}] 🏅{{ curIndex + 1 }}</h3> -->
+  <!-- <h5> <i class="pi pi-info-circle"></i> {{ unit }} {{ num }} </h5> -->
   <div ref="mapRef" id="map">
     <svg ref="svgRef" :width="svgWidth" :height="svgHeight">
       <text x="0" y="15" class="title">{{ unit }}</text>
-      <text x="0" y="60" class="quantity">{{ num }}</text>
+      <text x="250" y="25" class="quantity">{{ num }}</text>
+      <text x="0" y="400">🏅{{ curIndex + 1 }} ({{ streetObject?.freq }})</text>
+      <text x="0" y="440" class="street">{{ streetObject?.name }}</text>
     </svg>
   </div>
+  <ButtonGroup>
+    <Button @click="loadPrevious" :disabled="!curIndex" icon="pi pi-arrow-left"></Button>
+    <Button @click="chartClicked" link severity="secondary" icon="pi pi-save" />
+    <Button @click="loadNext" icon="pi pi-arrow-right"></Button>
+  </ButtonGroup>
 </template>
 
 <script setup lang="ts">
@@ -147,7 +150,7 @@ const loadStreet = () => {
   if (ext[0] !== undefined && ext[1] !== undefined) {
     const colorize = d3.scaleLinear<string>().domain(ext).clamp(true).range(['#f1eef6', '#0570b0']);
 
-  legendCellWidth = (svgWidth.value - legendRightMargin) / last;
+    legendCellWidth = (svgWidth.value - legendRightMargin) / last;
     const carta = svg.append("g").classed('carta', true);
     carta.append("g")
       // .   attr('x', '550px')
@@ -155,42 +158,42 @@ const loadStreet = () => {
       // .attr("transform", `translate(150,0)`)
 
 
-    .selectAll("path")
-    .data(store.geofeatures)
-    .join("path")
+      .selectAll("path")
+      .data(store.geofeatures)
+      .join("path")
       .style("stroke", 'silver')
-    .classed('district', true)
-    .attr('fill', (d: any) => {
+      .classed('district', true)
+      .attr('fill', (d: any) => {
         return colorize(getCounts(d.properties.terytId)[1]);
-    })
-    .attr("d", d3.geoPath().projection(projection) as any)
-    .on("mouseover", (e, d: any) => {
-      unit.value = d.properties.nazwa + ' w-wo';
+      })
+      .attr("d", d3.geoPath().projection(projection) as any)
+      .on("mouseover", (e, d: any) => {
+        unit.value = d.properties.nazwa + ' w-wo';
         const counts = getCounts(d.properties.terytId);
         num.value = `${counts[0]} ≈ ${counts[1]}%`;
-    })
-    .on("mouseout", function () {
-      unit.value = num.value = '';
-    });
+      })
+      .on("mouseout", function () {
+        unit.value = num.value = '';
+      });
 
     const legend = carta.append('g');
 
-  legend
-    .selectAll('.legend')
-    .data(d3.range(last))
-    .enter().append('rect')
-    .attr('x', d => legendOffsetX + d * legendCellWidth + 'px')
-    .attr("y", legendOffsetY)
-    .attr("width", legendCellWidth)
-    .attr("height", legendHeight)
+    legend
+      .selectAll('.legend')
+      .data(d3.range(last))
+      .enter().append('rect')
+      .attr('x', d => legendOffsetX + d * legendCellWidth + 'px')
+      .attr("y", legendOffsetY)
+      .attr("width", legendCellWidth)
+      .attr("height", legendHeight)
       .attr('fill', d => {
         // console.log(d, colorize(d));
         return colorize(d)
       });
 
-  legend
-    .append("g")
-    .attr("transform", `translate(${legendOffsetX},${legendOffsetY + legendHeight})`)
+    legend
+      .append("g")
+      .attr("transform", `translate(${legendOffsetX},${legendOffsetY + legendHeight})`)
       .call(d3.axisBottom(d3.scaleLinear().domain([0, last]).clamp(true).range([ext[0], last * legendCellWidth])).ticks(4)); // Math.round(last / 5)
   }
 };
