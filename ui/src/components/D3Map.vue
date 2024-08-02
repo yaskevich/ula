@@ -148,7 +148,11 @@ const loadStreet = () => {
   // console.log("last", last);
   const last = ext[1];
   if (ext[0] !== undefined && ext[1] !== undefined) {
-    const colorize = d3.scaleLinear<string>().domain(ext).clamp(true).range(['#f1eef6', '#0570b0']);
+    // const colorize = d3.scaleLinear<string>().domain([0, last]).range(['#f1eef6', '#0570b0']);
+    const colorize = d3
+      .scaleThreshold()
+      .domain(d3.ticks(0, last, 5))
+      .range(d3.schemeBlues[9]);
 
     legendCellWidth = (svgWidth.value - legendRightMargin) / last;
     const carta = svg.append("g").classed('carta', true);
@@ -178,9 +182,11 @@ const loadStreet = () => {
 
     const legend = carta.append('g');
 
+    // const leftLim = Math.ceil(last);
+
     legend
       .selectAll('.legend')
-      .data(d3.range(last))
+      .data(d3.ticks(0, Math.ceil(last), 5))
       .enter().append('rect')
       .attr('x', d => legendOffsetX + d * legendCellWidth + 'px')
       .attr("y", legendOffsetY)
@@ -191,10 +197,11 @@ const loadStreet = () => {
         return colorize(d)
       });
 
+    const sc = d3.scaleLinear().domain([0, last]).range([0, last * legendCellWidth]);
     legend
       .append("g")
       .attr("transform", `translate(${legendOffsetX},${legendOffsetY + legendHeight})`)
-      .call(d3.axisBottom(d3.scaleLinear().domain([0, last]).clamp(true).range([ext[0], last * legendCellWidth])).ticks(4)); // Math.round(last / 5)
+      .call(d3.axisBottom(sc).ticks(5)); // Math.round(last / 5)
   }
 };
 
