@@ -2,7 +2,7 @@
   <!-- <h3>{{ streetObject?.name }} [{{ streetObject?.freq }}] 🏅{{ curIndex + 1 }}</h3> -->
   <!-- <h5> <i class="pi pi-info-circle"></i> {{ unit }} {{ num }} </h5> -->
   <div ref="mapRef" id="map">
-    <svg ref="svgRef" :width="svgWidth" :height="svgHeight">
+    <svg ref="svgRef" :width="svgWidth" :height="svgHeight" style="font-family: 'Open Sans'">
       <text x="0" y="15" class="title">{{ unit }}</text>
       <text x="250" y="25" class="quantity">{{ num }}</text>
       <text x="0" y="400">🏅{{ curIndex + 1 }} ({{ streetObject?.freq }})</text>
@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, onBeforeMount, ref } from 'vue';
 import store from '../store';
 import * as d3 from 'd3';
 
@@ -34,7 +34,7 @@ const unit = ref('');
 const num = ref('');
 const svgRef = ref(null);
 const mapRef = ref<HTMLElement | null>(null);
-
+const curIndex = ref(0);
 const streetObject = ref<IStreetInfo>();
 const getCounts = (id: number) => streetObject.value?.regions?.[id] || [0, 0];
 
@@ -82,9 +82,7 @@ const renderImage = (svg: HTMLElement) => {
     const rect = svg.getBoundingClientRect();
     canvas.width = rect.width * 4;
     canvas.height = rect.height * 4;
-    // canvas.font = "Open Sans";
     if (context) {
-      context.font = "Open Sans";
       context.fillStyle = '#F1F1EF';
       context.fillRect(0, 0, canvas.width, canvas.height);
       context.drawImage(image, 0, 0, rect.width * 4, rect.height * 4);
@@ -94,7 +92,6 @@ const renderImage = (svg: HTMLElement) => {
           var url = URL.createObjectURL(blob);
           link.download = filename + '.png';
           link.href = url;
-          // console.log('link', link.href);
           link.click();
           URL.revokeObjectURL(url);
         }
@@ -113,13 +110,47 @@ const renderImage = (svg: HTMLElement) => {
   return promise;
 };
 
+const getFontBase64 = async () => {
+  let newStyle = "";
+
+  const blobToBase64 = (blob: Blob) => {
+    return new Promise((resolve, _) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  for (const sheet of document.styleSheets) {
+    for (const rule of sheet.cssRules) {
+      if (rule.constructor.name === 'CSSFontFaceRule') {
+        const styleRule = (rule as CSSStyleRule).style;
+        const srcString = styleRule.getPropertyValue("src");
+        if (!srcString.includes('primeicons')) {
+          const src = srcString.split("(")[1].split(")")[0].replace(/"|'/g, "");
+          const blob = await (await fetch(src)).blob();
+          const base64 = await blobToBase64(blob);
+          newStyle += `@font-face {`;
+          for (const style of styleRule) {
+            const propValue = style !== "src" ? styleRule.getPropertyValue(style) : `url("${base64}")`;
+            newStyle += `${style}: ${propValue};`;
+          }
+          newStyle += `}`;
+        }
+      }
+    }
+  }
+
+  if (newStyle) {
+    d3.select("svg").append('defs').append('style').attr('type', 'text/css').text(newStyle);
+  }
+};
+
 const chartClicked = async () => {
   if (svgRef.value) {
     await renderImage(svgRef.value);
   }
 };
-
-const curIndex = ref(0);
 
 const loadStreet = () => {
 
@@ -148,11 +179,10 @@ const loadStreet = () => {
   // console.log("last", last);
   const last = ext[1];
   if (ext[0] !== undefined && ext[1] !== undefined) {
-    // const colorize = d3.scaleLinear<string>().domain([0, last]).range(['#f1eef6', '#0570b0']);
-    const colorize = d3
-      .scaleThreshold()
-      .domain(d3.ticks(0, last, 5))
-      .range(d3.schemeBlues[9]);
+    const leftLim = Math.ceil(last);
+    const colorize = d3.scaleLinear<string>().domain([0, last]).range(['#f1eef6', '#0570b0']);
+
+    // const colorize = d3.scaleThreshold().domain(d3.ticks(0, leftLim, 5)).range(d3.schemeBlues[5] as any);
 
     legendCellWidth = (svgWidth.value - legendRightMargin) / last;
     const carta = svg.append("g").classed('carta', true);
@@ -165,7 +195,7 @@ const loadStreet = () => {
       .selectAll("path")
       .data(store.geofeatures)
       .join("path")
-      .style("stroke", 'silver')
+      .style("stroke", 'black')
       .classed('district', true)
       .attr('fill', (d: any) => {
         return colorize(getCounts(d.properties.terytId)[1]);
@@ -182,7 +212,6 @@ const loadStreet = () => {
 
     const legend = carta.append('g');
 
-    // const leftLim = Math.ceil(last);
 
     legend
       .selectAll('.legend')
@@ -217,6 +246,7 @@ const loadPrevious = () => {
   }
 };
 
+onBeforeMount(async () => await getFontBase64());
 onMounted(() => loadStreet());
 
 </script>
