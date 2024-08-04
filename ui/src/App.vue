@@ -7,7 +7,7 @@ import store from './store';
   <ScrollTop />
   <div class="container">
     <div class="content">
-      <Home />
+      <router-view />
     </div>
     <div class="footer p-2" id="about">
       <p>
@@ -36,9 +36,10 @@ import store from './store';
   color: #2c3e50;
   /* margin-top: 60px; */
   padding: 2rem;
+  background-color: #f1eef639;
 }
 .footer {
-  background: #f8f6f6;
+  /* background: #f8f6f6; */
   border-radius: 5px;
   padding: 5px;
 }

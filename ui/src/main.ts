@@ -1,6 +1,7 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import PrimeVue from 'primevue/config';
+import router from './router';
 import Button from 'primevue/button';
 import ButtonGroup from 'primevue/buttongroup';
 // import InputText from 'primevue/inputtext';
@@ -46,4 +47,4 @@ const preset = definePreset(Nora, {
     }
 });
 
-app.use(PrimeVue, { theme: { preset } }).mount('#app');
+app.use(PrimeVue, { theme: { preset } }).use(router).mount('#app');
