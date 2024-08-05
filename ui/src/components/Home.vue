@@ -1,15 +1,16 @@
-<script setup lang="ts">
-import { ref, reactive } from 'vue';
-import store from '../store';
-
-const selectedArea = ref({} as ICascadeItem);
-
-const showInfo = ref(false);
-</script>
-
 <template>
-  <h2>Analysis of Polsih street names</h2>
+  <!-- <h2>Analysis of the street names of Poland</h2> -->
+  <div class="grid">
+    <div class="col">
+      <D3Map />
+    </div>
+    <div class="col">
+      <div v-for="(val,index) in store.freq.streets.slice(0,500)">
+        <Button text @click="$router.push(`/top/${index}`)">{{index +1}}. {{ Object.keys(val).shift() }}</Button>
+        </div>
+      </div>
 
+  </div>
   <!--
   <div class="field mx-auto text-center">
       <InputText id="search" aria-describedby="search-help" type="text" v-model="userinput" @input="inputEvent" class="d-block mx-auto" />
@@ -17,11 +18,15 @@ const showInfo = ref(false);
   </div>
   -->
 
-  <div class="mb-4" v-if="showInfo">
-    <!-- <hr /> -->
-  </div>
-
 </template>
+
+<script setup lang="ts">
+import { ref, reactive } from 'vue';
+import store from '../store';
+import D3Map from './D3Map.vue';
+
+</script>
+
 
 <style scoped>
 .item {
