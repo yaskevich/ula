@@ -5,21 +5,28 @@
     <svg ref="svgRef" :width="svgWidth" :height="svgHeight" style="font-family: 'Open Sans'">
       <text x="0" y="15" class="title">{{ unit }}</text>
       <text x="250" y="25" class="quantity">{{ num }}</text>
-      <text x="0" y="400">🏅{{ curIndex + 1 }} ({{ streetObject?.freq }})</text>
-      <text x="0" y="440" class="street">{{ streetObject?.name }}</text>
+      <text x="0" y="350">🏅{{ id + 1 }} ({{ streetObject?.freq }})</text>
+      <text x="0" y="390" class="street">{{ streetObject?.name }}</text>
     </svg>
   </div>
   <ButtonGroup>
-    <Button @click="loadPrevious" :disabled="!curIndex" icon="pi pi-arrow-left"></Button>
+    <Button @click="loadPrevious" :disabled="!id" icon="pi pi-arrow-left"></Button>
     <Button @click="chartClicked" link severity="secondary" icon="pi pi-save" />
     <Button @click="loadNext" icon="pi pi-arrow-right"></Button>
   </ButtonGroup>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeMount, ref } from 'vue';
+import { onMounted, onBeforeMount, ref, toRaw } from 'vue';
+import router from '../router';
 import store from '../store';
 import * as d3 from 'd3';
+import { useRoute } from 'vue-router';
+import { onBeforeRouteUpdate } from 'vue-router';
+
+const vuerouter = useRoute();
+const id = ref(Number(toRaw(vuerouter?.params?.id)) || 0);
+console.log("requested", id.value);
 
 const svgWidth = ref(0);
 const svgHeight = ref(0);
@@ -34,9 +41,8 @@ const unit = ref('');
 const num = ref('');
 const svgRef = ref(null);
 const mapRef = ref<HTMLElement | null>(null);
-const curIndex = ref(0);
 const streetObject = ref<IStreetInfo>();
-const getCounts = (id: number) => streetObject.value?.regions?.[id] || [0, 0];
+const getCounts = (num: number) => streetObject.value?.regions?.[num] || [0, 0];
 
 
 const serializeSVG = (svg: HTMLElement | SVGElement) => {
@@ -172,8 +178,9 @@ const loadStreet = () => {
     .scale(svgWidth.value / Math.PI * 16)
     .translate([svgWidth.value >> 1, svgHeight.value >> 1]);
 
-  streetObject.value = Object.values(store.freq.streets[curIndex.value])?.[0] as IStreetInfo;
+  streetObject.value = Object.values(store.freq.streets[id.value])?.[0] as IStreetInfo;
 
+  // router.push(`/top/${id.value}`);
   const values = Object.values(streetObject.value.regions).map(x => x[1]);
   const ext = d3.extent(values) as Array<number>;
   // console.log("last", last);
@@ -212,10 +219,11 @@ const loadStreet = () => {
 
     const legend = carta.append('g');
 
+    const ticksNumber = 10;
 
     legend
       .selectAll('.legend')
-      .data(d3.ticks(0, Math.ceil(last), 5))
+      .data(d3.ticks(0, Math.ceil(last), ticksNumber))
       .enter().append('rect')
       .attr('x', d => legendOffsetX + d * legendCellWidth + 'px')
       .attr("y", legendOffsetY)
@@ -230,25 +238,28 @@ const loadStreet = () => {
     legend
       .append("g")
       .attr("transform", `translate(${legendOffsetX},${legendOffsetY + legendHeight})`)
-      .call(d3.axisBottom(sc).ticks(5)); // Math.round(last / 5)
+      .call(d3.axisBottom(sc).ticks(ticksNumber)); // Math.round(last / 5)
   }
 };
 
 const loadNext = () => {
-  curIndex.value += 1;
-  loadStreet();
+  id.value += 1;
+  router.push(`/top/${id.value}`)
 };
 
 const loadPrevious = () => {
-  if (curIndex.value) {
-    curIndex.value -= 1;
-    loadStreet();
+  if (id.value) {
+    id.value -= 1;
+    router.push(`/top/${id.value}`)
   }
 };
 
 onBeforeMount(async () => await getFontBase64());
 onMounted(() => loadStreet());
-
+onBeforeRouteUpdate(async (to, from) => {
+  id.value = Number(to.params.id);
+  loadStreet();
+})
 </script>
 
 <style scoped lang="scss">
@@ -277,5 +288,10 @@ onMounted(() => loadStreet());
   fill: #0570b0;*/
   fill: #5f071c;
   font-size: 2em;
+}
+
+#map {
+  min-width: 350px;
+  max-width: 500px;
 }
 </style>
