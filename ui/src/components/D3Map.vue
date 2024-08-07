@@ -235,10 +235,12 @@ const loadStreet = () => {
       });
 
     const sc = d3.scaleLinear().domain([0, last]).range([0, last * legendCellWidth]);
+
+
     legend
       .append("g")
       .attr("transform", `translate(${legendOffsetX},${legendOffsetY + legendHeight})`)
-      .call(d3.axisBottom(sc).ticks(ticksNumber)); // Math.round(last / 5)
+      .call(d3.axisBottom(sc).ticks(ticksNumber).tickFormat((d, i) => String(parseFloat(Number(d).toFixed(4))))); // Math.round(last / 5)
   }
 };
 
