@@ -5,7 +5,15 @@ import store from './store';
 
 <template>
   <ScrollTop />
+  
   <div class="container">
+    <div id="main">
+    <div id="nav">
+      <router-link to="/home">Home</router-link> |
+      <router-link to="/top/1">Schedule</router-link> |
+      <!-- <router-link to="/about">About</router-link> -->
+    </div>
+  </div>
     <div class="content">
       <router-view />
     </div>
@@ -16,10 +24,10 @@ import store from './store';
           <i class="pi pi-github"></i>
         </a>
       </p>
-      
+
       <p>
         <small>
-          The icon «Place Marker»  is from 
+          The icon «Place Marker» is from
           <a href="https://icons8.com/icon/30622/place-marker" target="_blank">Icons8</a>.
         </small>
       </p>
@@ -38,20 +46,26 @@ import store from './store';
   padding: 2rem;
   background-color: #f1eef639;
 }
+
+#nav{
+  margin-bottom: 1rem;
+}
 .footer {
   /* background: #f8f6f6; */
   border-radius: 5px;
   padding: 5px;
 }
+
 .content {
   min-height: calc(100vh - 220px);
 }
 
 a {
-  color: gray;
-  font-weight: bold;
+  /* color: gray; */
+  /* font-weight: bold; */
   text-decoration: none;
 }
+
 .container {
   max-width: 900px;
   margin: auto;
