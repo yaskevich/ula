@@ -159,7 +159,7 @@ const chartClicked = async () => {
 };
 
 const loadStreet = () => {
-
+  id.value = id.value || 0;
   let svg = d3.select(svgRef.value);
 
   svg.select(".carta").remove();
@@ -177,6 +177,8 @@ const loadStreet = () => {
     .center([19.480556, 52.069167])
     .scale(svgWidth.value / Math.PI * 16)
     .translate([svgWidth.value >> 1, svgHeight.value >> 1]);
+
+  const path = d3.geoPath().projection(projection);
 
   streetObject.value = Object.values(store.freq.streets[id.value])?.[0] as IStreetInfo;
 
@@ -207,7 +209,7 @@ const loadStreet = () => {
       .attr('fill', (d: any) => {
         return colorize(getCounts(d.properties.terytId)[1]);
       })
-      .attr("d", d3.geoPath().projection(projection) as any)
+      .attr("d", path as any)
       .on("mouseover", (e, d: any) => {
         unit.value = d.properties.nazwa + ' w-wo';
         const counts = getCounts(d.properties.terytId);
@@ -216,6 +218,22 @@ const loadStreet = () => {
       .on("mouseout", function () {
         unit.value = num.value = '';
       });
+
+
+    carta.append("g").attr('class', 'zoom')
+      .selectAll("text")
+      .data(store.geofeatures)
+      .enter().append("text")
+      .attr("class", "place-label")
+      .style("font-size", "8px")
+      .attr("x", function (d:any) { return path.centroid(d)[0]; })
+      .attr("y", function (d:any) { return path.centroid(d)[1] + 4; })
+      .attr("text-anchor", "middle")
+      .text(function (d:any) {
+        return d.properties.nazwa;
+      });
+    // .on('click', map.clicked.bind(map));
+
 
     const legend = carta.append('g');
 
