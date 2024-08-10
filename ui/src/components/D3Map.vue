@@ -1,6 +1,8 @@
 <template>
   <!-- <h3>{{ streetObject?.name }} [{{ streetObject?.freq }}] 🏅{{ curIndex + 1 }}</h3> -->
   <!-- <h5> <i class="pi pi-info-circle"></i> {{ unit }} {{ num }} </h5> -->
+  <Checkbox @change="showHideCaptions" v-model="captionsVisible" :binary="true" />
+
   <div ref="mapRef" id="map">
     <svg ref="svgRef" :width="svgWidth" :height="svgHeight" style="font-family: 'Open Sans'">
       <text x="0" y="15" class="title">{{ unit }}</text>
@@ -24,6 +26,8 @@ import * as d3 from 'd3';
 import { useRoute } from 'vue-router';
 import { onBeforeRouteUpdate } from 'vue-router';
 
+const captionsVisible = ref(true);
+
 const vuerouter = useRoute();
 const id = ref(Number(toRaw(vuerouter?.params?.id)) || 0);
 console.log("requested", id.value);
@@ -36,7 +40,6 @@ const legendOffsetX = 5;
 const legendHeight = 10;
 const legendRightMargin = 50;
 let legendCellWidth = 5;
-
 const unit = ref('');
 const num = ref('');
 const svgRef = ref(null);
@@ -44,6 +47,9 @@ const mapRef = ref<HTMLElement | null>(null);
 const streetObject = ref<IStreetInfo>();
 const getCounts = (num: number) => streetObject.value?.regions?.[num] || [0, 0];
 
+const showHideCaptions = () => {
+  d3.selectAll('.captions').classed('hidden', !captionsVisible.value);
+};
 
 const serializeSVG = (svg: HTMLElement | SVGElement) => {
   const xmlns = 'http://www.w3.org/2000/xmlns/';
@@ -220,20 +226,28 @@ const loadStreet = () => {
       });
 
 
-    carta.append("g").attr('class', 'zoom')
+
+    carta.append("g").attr('class', 'captions')
+      .selectAll("text")
+      .data(store.geofeatures)
+      .enter().append("text")
+      .attr("class", "place-label shadow")
+      .style("font-size", "8px")
+      .attr("x", (d: any) => path.centroid(d)[0])
+      .attr("y", (d: any) => path.centroid(d)[1] + 4)
+      .attr("text-anchor", "middle")
+      .text((d: any) => d.properties.nazwa);
+
+    carta.append("g").attr('class', 'captions')
       .selectAll("text")
       .data(store.geofeatures)
       .enter().append("text")
       .attr("class", "place-label")
       .style("font-size", "8px")
-      .attr("x", function (d:any) { return path.centroid(d)[0]; })
-      .attr("y", function (d:any) { return path.centroid(d)[1] + 4; })
+      .attr("x", (d: any) => path.centroid(d)[0])
+      .attr("y", (d: any) => path.centroid(d)[1] + 4)
       .attr("text-anchor", "middle")
-      .text(function (d:any) {
-        return d.properties.nazwa;
-      });
-    // .on('click', map.clicked.bind(map));
-
+      .text((d: any) => d.properties.nazwa);
 
     const legend = carta.append('g');
 
@@ -313,5 +327,17 @@ onBeforeRouteUpdate(async (to, from) => {
 #map {
   min-width: 350px;
   max-width: 500px;
+}
+
+:deep(.place-label) {
+  stroke: black;
+  stroke-width: 0.5px;
+  pointer-events: none;
+}
+
+:deep(.place-label.shadow) {
+  stroke: white;
+  stroke-width: 2.5px;
+  opacity: 0.9;
 }
 </style>
