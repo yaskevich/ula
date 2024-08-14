@@ -7,11 +7,13 @@
     <svg ref="svgRef" :width="svgWidth" :height="svgHeight" style="font-family: 'Open Sans'">
       <text x="0" y="15" class="title">{{ unit }}</text>
       <text x="250" y="25" class="quantity">{{ num }}</text>
-      <text x="0" y="350">🏅{{ id + 1 }} ({{ streetObject?.freq }})</text>
-      <text x="0" y="390" class="street">{{ streetObject?.name }}</text>
+      <g v-if="vuerouter.name === 'Top'">
+        <text x="0" y="350">🏅{{ id + 1 }} ({{ streetObject?.freq }})</text>
+        <text x="0" y="390" class="street">{{ streetObject?.name }}</text>
+      </g>
     </svg>
   </div>
-  <ButtonGroup>
+  <ButtonGroup v-if="vuerouter.name === 'Top'">
     <Button @click="loadPrevious" :disabled="!id" icon="pi pi-arrow-left"></Button>
     <Button @click="chartClicked" link severity="secondary" icon="pi pi-save" />
     <Button @click="loadNext" icon="pi pi-arrow-right"></Button>
@@ -29,6 +31,8 @@ import { onBeforeRouteUpdate } from 'vue-router';
 const captionsVisible = ref(true);
 
 const vuerouter = useRoute();
+console.log(vuerouter.name);
+
 const id = ref(Number(toRaw(vuerouter?.params?.id)) || 0);
 console.log("requested", id.value);
 
@@ -186,10 +190,11 @@ const loadStreet = () => {
 
   const path = d3.geoPath().projection(projection);
 
+  // vuerouter.name === 'Top'
   streetObject.value = Object.values(store.freq.streets[id.value])?.[0] as IStreetInfo;
 
   // router.push(`/top/${id.value}`);
-  const values = Object.values(streetObject.value.regions).map(x => x[1]);
+  const values = vuerouter.name === 'Top' ? Object.values(streetObject.value.regions).map(x => x[1]) : Object.values(store.freq.regions);
   const ext = d3.extent(values) as Array<number>;
   // console.log("last", last);
   const last = ext[1];
@@ -213,12 +218,14 @@ const loadStreet = () => {
       .style("stroke", 'black')
       .classed('district', true)
       .attr('fill', (d: any) => {
-        return colorize(getCounts(d.properties.terytId)[1]);
+        return colorize(vuerouter.name === 'Top' ? getCounts(d.properties.terytId)[1] : store.freq.regions[d.properties.terytId]);
       })
       .attr("d", path as any)
       .on("mouseover", (e, d: any) => {
         unit.value = d.properties.nazwa + ' w-wo';
-        const counts = getCounts(d.properties.terytId);
+        const counts = vuerouter.name === 'Top' ? getCounts(d.properties.terytId)[1] : [store.freq.regions[d.properties.terytId], 0];
+        console.log(counts);
+
         num.value = `${counts[0]} ≈ ${counts[1]}%`;
       })
       .on("mouseout", function () {
@@ -248,6 +255,9 @@ const loadStreet = () => {
       .attr("y", (d: any) => path.centroid(d)[1] + 4)
       .attr("text-anchor", "middle")
       .text((d: any) => d.properties.nazwa);
+
+
+    showHideCaptions();
 
     const legend = carta.append('g');
 
@@ -289,8 +299,12 @@ const loadPrevious = () => {
 };
 
 onBeforeMount(async () => await getFontBase64());
+
 onMounted(() => loadStreet());
+
 onBeforeRouteUpdate(async (to, from) => {
+  console.log(to.params);
+
   id.value = Number(to.params.id);
   loadStreet();
 })
