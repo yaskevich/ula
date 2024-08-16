@@ -5,18 +5,9 @@
       <D3Map />
     </div>
     <div class="col">
-      <div v-for="(val,index) in store.freq.streets.slice(0,500)">
-        <Button text @click="$router.push(`/top/${index}`)">{{index +1}}. {{ Object.keys(val).shift() }}</Button>
-        </div>
-      </div>
 
+    </div>
   </div>
-  <!--
-  <div class="field mx-auto text-center">
-      <InputText id="search" aria-describedby="search-help" type="text" v-model="userinput" @input="inputEvent" class="d-block mx-auto" />
-      <small id="search-help">Увядзіце больш за 2 знакі. <br/>Вынік адлюстроўваецца імгненна</small>u
-  </div>
-  -->
 
 </template>
 
