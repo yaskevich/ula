@@ -49,7 +49,8 @@ const num = ref('');
 const svgRef = ref(null);
 const mapRef = ref<HTMLElement | null>(null);
 const streetObject = ref<IStreetInfo>();
-const getCounts = (num: number) => streetObject.value?.regions?.[num] || [0, 0];
+const getCounts = (hash: keyable, num: number) => hash?.[num] || [0, 0];
+const renderPercent = (x: number) => String(parseFloat(Number(x).toFixed(4)));
 
 const showHideCaptions = () => {
   d3.selectAll('.captions').classed('hidden', !captionsVisible.value);
@@ -192,11 +193,10 @@ const loadStreet = () => {
 
   // vuerouter.name === 'Top'
   streetObject.value = Object.values(store.freq.streets[id.value])?.[0] as IStreetInfo;
-
+  const dataset = (vuerouter.name === 'Top' ? streetObject.value: store.freq).regions;
   // router.push(`/top/${id.value}`);
-  const values = vuerouter.name === 'Top' ? Object.values(streetObject.value.regions).map(x => x[1]) : Object.values(store.freq.regions);
+  const values = Object.values(dataset).map(x => x[1]);
   const ext = d3.extent(values) as Array<number>;
-  // console.log("last", last);
   const last = ext[1];
   if (ext[0] !== undefined && ext[1] !== undefined) {
     const leftLim = Math.ceil(last);
@@ -218,15 +218,14 @@ const loadStreet = () => {
       .style("stroke", 'black')
       .classed('district', true)
       .attr('fill', (d: any) => {
-        return colorize(vuerouter.name === 'Top' ? getCounts(d.properties.terytId)[1] : store.freq.regions[d.properties.terytId]);
+        return colorize(getCounts(dataset, d.properties.terytId)[1]);
       })
       .attr("d", path as any)
       .on("mouseover", (e, d: any) => {
         unit.value = d.properties.nazwa + ' w-wo';
-        const counts = vuerouter.name === 'Top' ? getCounts(d.properties.terytId)[1] : [store.freq.regions[d.properties.terytId], 0];
-        console.log(counts);
-
-        num.value = `${counts[0]} ≈ ${counts[1]}%`;
+        const counts = getCounts(dataset, d.properties.terytId);
+        // console.log(counts);
+        num.value = `${counts[0]} ≈ ${renderPercent(counts[1])}%`;
       })
       .on("mouseout", function () {
         unit.value = num.value = '';
@@ -256,7 +255,6 @@ const loadStreet = () => {
       .attr("text-anchor", "middle")
       .text((d: any) => d.properties.nazwa);
 
-
     showHideCaptions();
 
     const legend = carta.append('g');
@@ -282,7 +280,7 @@ const loadStreet = () => {
     legend
       .append("g")
       .attr("transform", `translate(${legendOffsetX},${legendOffsetY + legendHeight})`)
-      .call(d3.axisBottom(sc).ticks(ticksNumber).tickFormat((d, i) => String(parseFloat(Number(d).toFixed(4))))); // Math.round(last / 5)
+      .call(d3.axisBottom(sc).ticks(ticksNumber).tickFormat((d, i) => renderPercent(d as number))); // Math.round(last / 5)
   }
 };
 
@@ -303,8 +301,7 @@ onBeforeMount(async () => await getFontBase64());
 onMounted(() => loadStreet());
 
 onBeforeRouteUpdate(async (to, from) => {
-  console.log(to.params);
-
+  // console.log(to.params);
   id.value = Number(to.params.id);
   loadStreet();
 })
