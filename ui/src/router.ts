@@ -2,11 +2,15 @@ import { createWebHistory, createRouter } from 'vue-router';
 
 const routes = [
   {
-    path: '/top/:id?',
-    alias: ['/home'],
+    path: '/home',
     name: 'Home',
     // component: Home,
     component: () => import('./components/Home.vue'),
+  },
+  {
+    path: '/top/:id?',
+    name: 'Top',
+    component: () => import('./components/Top.vue'),
   },
   // {
   //   path: '/list',
