@@ -8,15 +8,15 @@ const routes = [
     component: () => import('./components/Home.vue'),
   },
   {
-    path: '/top/:id?',
+    path: '/country/:id?',
     name: 'Top',
     component: () => import('./components/Top.vue'),
   },
-  // {
-  //   path: '/list',
-  //   name: 'List',
-  //   component: () => import('./components/List.vue'),
-  // },
+  {
+    path: '/regions/:id?',
+    name: 'Regions',
+    component: () => import('./components/Regions.vue'),
+  },
 ];
 
 const router = createRouter({
