@@ -8,13 +8,13 @@
       <text x="0" y="15" class="title">{{ unit }}</text>
       <text x="250" y="25" class="quantity">{{ num }}</text>
       <g v-if="vuerouter.name === 'Top'">
-        <text x="0" y="350">🏅{{ id + 1 }} ({{ streetObject?.freq }})</text>
+        <text x="0" y="350">🏅{{ id }} ({{ streetObject?.freq }})</text>
         <text x="0" y="390" class="street">{{ streetObject?.name }}</text>
       </g>
     </svg>
   </div>
   <ButtonGroup v-if="vuerouter.name === 'Top'">
-    <Button @click="loadPrevious" :disabled="!id" icon="pi pi-arrow-left"></Button>
+    <Button @click="loadPrevious" :disabled="id < 2" icon="pi pi-arrow-left"></Button>
     <Button @click="chartClicked" link severity="secondary" icon="pi pi-save" />
     <Button @click="loadNext" icon="pi pi-arrow-right"></Button>
   </ButtonGroup>
@@ -31,10 +31,10 @@ import { onBeforeRouteUpdate } from 'vue-router';
 const captionsVisible = ref(true);
 
 const vuerouter = useRoute();
-console.log(vuerouter.name);
+// console.log(vuerouter.name);
 
-const id = ref(Number(toRaw(vuerouter?.params?.id)) || 0);
-console.log("requested", id.value);
+const id = ref(Number(toRaw(vuerouter?.params?.id)) || 1);
+// console.log("requested", id.value);
 
 const svgWidth = ref(0);
 const svgHeight = ref(0);
@@ -192,9 +192,8 @@ const loadStreet = () => {
   const path = d3.geoPath().projection(projection);
 
   // vuerouter.name === 'Top'
-  streetObject.value = Object.values(store.freq.streets[id.value])?.[0] as IStreetInfo;
+  streetObject.value = Object.values(store.freq.streets[id.value-1])?.[0] as IStreetInfo;
   const dataset = (vuerouter.name === 'Top' ? streetObject.value: store.freq).regions;
-  // router.push(`/top/${id.value}`);
   const values = Object.values(dataset).map(x => x[1]);
   const ext = d3.extent(values) as Array<number>;
   const last = ext[1];
@@ -286,13 +285,13 @@ const loadStreet = () => {
 
 const loadNext = () => {
   id.value += 1;
-  router.push(`/top/${id.value}`)
+  router.push(`/country/${id.value}`)
 };
 
 const loadPrevious = () => {
   if (id.value) {
     id.value -= 1;
-    router.push(`/top/${id.value}`)
+    router.push(`/country/${id.value}`)
   }
 };
 
