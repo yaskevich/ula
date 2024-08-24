@@ -1,19 +1,13 @@
-<script setup lang="ts">
-import Home from './components/Home.vue';
-import store from './store';
-</script>
-
 <template>
   <ScrollTop />
-  
   <div class="container">
     <div id="main">
-    <div id="nav">
-      <router-link to="/home">Home</router-link> |
-      <router-link to="/top/1">Schedule</router-link> |
-      <!-- <router-link to="/about">About</router-link> -->
+      <div id="nav">
+        <router-link to="/home">Home</router-link> |
+        <router-link to="/country/1">Country top</router-link> |
+        <router-link to="/regions/1">Regional tops</router-link>
+      </div>
     </div>
-  </div>
     <div class="content">
       <router-view />
     </div>
@@ -24,7 +18,6 @@ import store from './store';
           <i class="pi pi-github"></i>
         </a>
       </p>
-
       <p>
         <small>
           The icon «Place Marker» is from
@@ -34,6 +27,10 @@ import store from './store';
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import store from './store';
+</script>
 
 <style>
 #app {
@@ -47,9 +44,10 @@ import store from './store';
   background-color: #f1eef639;
 }
 
-#nav{
+#nav {
   margin-bottom: 1rem;
 }
+
 .footer {
   /* background: #f8f6f6; */
   border-radius: 5px;
@@ -61,7 +59,7 @@ import store from './store';
 }
 
 a {
-  /* color: gray; */
+  color: gray;
   /* font-weight: bold; */
   text-decoration: none;
 }
