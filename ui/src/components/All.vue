@@ -1,0 +1,35 @@
+<template>
+    <!-- <h2>Analysis of the street names of Poland</h2> -->
+    <div v-for="(val, index) in store.freq.streets.slice(0, limit)">
+        <Button :text="route.fullPath !== `/country/${index + 1}`" @click="router.push(`/country/${index + 1}`)">{{
+        index + 1
+    }}. {{ Object.keys(val).shift() }}</Button>
+    </div>
+    <!--
+      <div class="field mx-auto text-center">
+          <InputText id="search" aria-describedby="search-help" type="text" v-model="userinput" @input="inputEvent" class="d-block mx-auto" />
+          <small id="search-help">Увядзіце больш за 2 знакі. <br/>Вынік адлюстроўваецца імгненна</small>u
+      </div>
+      -->
+</template>
+
+<script setup lang="ts">
+import store from '../store';
+import D3Map from './D3Map.vue';
+import { useRouter, useRoute } from 'vue-router';
+
+const router = useRouter();
+const route = useRoute();
+const limit = Number(route.params.limit) || 500;
+console.log(route.params.limit);
+</script>
+
+<style scoped>
+.item {
+    margin-bottom: 1rem;
+    padding: 5px;
+    /* background: darkred;
+         color:white;
+        */
+}
+</style>
