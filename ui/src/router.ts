@@ -13,6 +13,11 @@ const routes = [
     component: () => import('./components/Top.vue'),
   },
   {
+    path: '/list/:limit?',
+    name: 'All',
+    component: () => import('./components/All.vue'),
+  },
+  {
     path: '/regions/:id?',
     name: 'Regions',
     component: () => import('./components/Regions.vue'),
