@@ -8,6 +8,12 @@ const routes = [
     component: () => import('./components/Home.vue'),
   },
   {
+    path: '/lexicon',
+    name: 'Lexicon',
+    // component: Home,
+    component: () => import('./components/Lexicon.vue'),
+  },
+  {
     path: '/country/:id?',
     name: 'Top',
     component: () => import('./components/Top.vue'),
