@@ -1,64 +1,32 @@
 <template>
+    <div class="p-4">
+        <ToggleSwitch v-model="editMode" />
+    </div>
     <div class="card flex justify-center">
-        <Tree :value="nodeRefs" class="w-full md:w-[30rem]"></Tree>
+        <Draggable v-if="editMode" v-model="nodeRefs" ref="tree" textKey="label" :defaultOpen="false" class="ml-4">
+            <template #default="{ node, stat }">
+                <span v-if="stat.children.length" @click="stat.open = !stat.open">
+                    {{ stat.open ? "-" : "+" }}
+                </span>
+                <span :class="node.icon"></span>
+                <span class="fa-light fa-chevron-down"></span>
+                {{ node.label }}
+            </template>
+        </Draggable>
+        <Tree v-else :value="nodeRefs" class="w-full md:w-[30rem]" selectionMode="single"></Tree>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-
+import { ref, onBeforeMount } from 'vue';
+import { BaseTree, Draggable } from '@he-tree/vue';
+import '@he-tree/vue/style/default.css';
 const nodeRefs = ref();
-const icons = ['crown', 'clipboard', 'warehouse', 'trophy', 'bullseye', 'briefcase', 'bell', 'envelope', 'palette', 'sun', 'car', 'building', 'gauge', 'thumbtack', 'barcode', 'face-smile']
+const icons = ['crown', 'clipboard', 'warehouse', 'trophy', 'bullseye', 'briefcase', 'bell', 'envelope', 'palette', 'sun', 'car', 'building', 'gauge', 'thumbtack', 'barcode', 'face-smile'];
 
+const editMode = ref(false);
 
-const nodes = [
-    {
-        key: '0',
-        label: 'Documents',
-        data: 'Documents Folder',
-        icon: 'pi pi-fw pi-inbox',
-        children: [
-            {
-                key: '0-0',
-                label: 'Work',
-                data: 'Work Folder',
-                icon: 'pi pi-fw pi-cog',
-                children: [
-                    { key: '0-0-0', label: 'Expenses.doc', icon: 'pi pi-fw pi-file', data: 'Expenses Document' },
-                    { key: '0-0-1', label: 'Resume.doc', icon: 'pi pi-fw pi-file', data: 'Resume Document' }
-                ]
-            },
-            {
-                key: '0-1',
-                label: 'Home',
-                data: 'Home Folder',
-                icon: 'pi pi-fw pi-home',
-                children: [{ key: '0-1-0', label: 'Invoices.txt', icon: 'pi pi-fw pi-file', data: 'Invoices for this month' }]
-            }
-        ]
-    },
-    {
-        key: '1',
-        label: 'Events',
-        data: 'Events Folder',
-        icon: 'pi pi-fw pi-calendar',
-        children: [
-            { key: '1-0', label: 'Meeting', icon: 'pi pi-fw pi-calendar-plus', data: 'Meeting' },
-            { key: '1-1', label: 'Product Launch', icon: 'pi pi-fw pi-calendar-plus', data: 'Product Launch' },
-            { key: '1-2', label: 'Report Review', icon: 'pi pi-fw pi-calendar-plus', data: 'Report Review' }
-        ]
-    },
-    {
-        key: '2',
-        label: 'Movies',
-        data: 'Movies Folder',
-        icon: 'pi pi-fw pi-star-fill',
-
-    }
-];
-
-
-onMounted(async () => {
+onBeforeMount(async () => {
     // NodeService.getTreeNodes().then((data) => (nodes.value = data));
     const response = await fetch('/api/onto');
     if (response.status === 200) {
