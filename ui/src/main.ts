@@ -11,7 +11,9 @@ import Tree from 'primevue/tree';
 import CascadeSelect from 'primevue/cascadeselect';
 import Badge from 'primevue/badge';
 import Card from 'primevue/card';
+import Chip from 'primevue/chip';
 import ScrollTop from 'primevue/scrolltop';
+import ToggleSwitch from 'primevue/toggleswitch';
 import 'primeicons/primeicons.css';
 import 'primeflex/primeflex.css';
 import Nora from '@primevue/themes/nora';
@@ -32,6 +34,8 @@ app.component('Checkbox', Checkbox);
 app.component('InputText', InputText);
 app.component('CascadeSelect', CascadeSelect);
 app.component('ScrollTop', ScrollTop);
+app.component('ToggleSwitch', ToggleSwitch);
+app.component('Chip', Chip);
 
 const preset = definePreset(Nora, {
     semantic: {
