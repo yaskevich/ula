@@ -1,36 +1,29 @@
 <template>
     <!-- <h2>Analysis of the street names of Poland</h2> -->
-    <div class="grid">
-        <div class="col">
+    <n-space>
+        <div>
             <D3Map />
         </div>
-        <div class="col">
-            <div v-for="index in Array(500).keys()">
-                <Button :text="route.fullPath !== `/regions/${index + 1}`"
-                    @click="router.push(`/regions/${index + 1}`)">{{
-                index + 1
-            }}</Button>
-            </div>
+        <div>
+            <n-input-number v-model:value="id" clearable :min="1" />
+            <!-- <n-space>
+                <span v-for="index in Array(500).keys()">
+                    <n-button :type="route.fullPath !== `/regions/${index + 1}` ? 'default' : 'info'"
+                        @click="router.push(`/regions/${index + 1}`)">
+                        {{ index + 1 }}</n-button>
+                </span>
+            </n-space> -->
         </div>
-    </div>
+    </n-space>
 </template>
 
 <script setup lang="ts">
 import store from '../store';
 import D3Map from './D3Map.vue';
+import { ref, onBeforeMount } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
 const route = useRoute();
-// console.log(route.fullPath);
+const id = ref(Number(route.params.id));
 </script>
-
-<style scoped>
-.item {
-    margin-bottom: 1rem;
-    padding: 5px;
-    /* background: darkred;
-         color:white;
-        */
-}
-</style>
