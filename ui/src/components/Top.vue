@@ -1,16 +1,16 @@
 <template>
   <!-- <h2>Analysis of the street names of Poland</h2> -->
-  <div class="grid">
-    <div class="col">
-      <D3Map />
-    </div>
-    <div class="col">
-      <div v-for="(val, index) in store.freq.streets.slice(0, 500)">
-        <Button :text="route.fullPath !== `/country/${index + 1}`" @click="router.push(`/country/${index + 1}`)">{{ index + 1
-          }}. {{ Object.keys(val).shift() }}</Button>
+  <n-space>
+    <D3Map />
+    <div>
+      <div v-for="(val, index) in store.freq.streets.slice(0, 500) ">
+        <n-button text :type="route.fullPath !== `/country/${index + 1}` ? 'default' : 'info'"
+          @click="router.push(`/country/${index + 1}`)">{{
+        index + 1
+      }}. {{ val.name }}</n-button>
       </div>
     </div>
-  </div>
+  </n-space>
   <!--
     <div class="field mx-auto text-center">
         <InputText id="search" aria-describedby="search-help" type="text" v-model="userinput" @input="inputEvent" class="d-block mx-auto" />
