@@ -1,17 +1,18 @@
 <template>
     <!-- <h2>Analysis of the street names of Poland</h2> -->
-     <div v-if="isLoaded">
-    <div v-for="(val, index) in store.freq.streets.slice(0, limit)">
-        <Button :text="route.fullPath !== `/country/${index + 1}`" @click="router.push(`/country/${index + 1}`)">{{
+    <div v-if="isLoaded">
+        <n-space v-for="(val, index) in store.freq.streets.slice(0, limit)">
+            <n-button :text="route.fullPath !== `/country/${index + 1}`"
+                @click="router.push(`/country/${index + 1}`)">{{
         index + 1
-    }}. {{ val.name }}</Button>
-        <InputText v-if="showEditor === index" type="text" v-model="value" size="small" />
-        <span v-else>
-            <Chip v-if="val.name in dict" :label="dict[val.name]" />
-            <Button text icon="pi pi-pencil" @click="showEditor = index"></Button>
-        </span>
+    }}. {{ val.name }}</n-button>
+            <!-- <InputText v-if="showEditor === index" type="text" v-model="value" size="small" /> -->
+            <n-tag type="info" size="small" v-if="val.name in dict">
+                {{ dict[val.name] }}
+            </n-tag>
+            <n-button text icon="pi pi-pencil" @click="showEditor = index"></n-button>
+        </n-space>
     </div>
-</div>
     <!--
       <div class="field mx-auto text-center">
           <InputText id="search" aria-describedby="search-help" type="text" v-model="userinput" @input="inputEvent" class="d-block mx-auto" />
