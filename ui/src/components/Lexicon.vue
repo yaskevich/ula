@@ -1,30 +1,37 @@
 <template>
     <div class="p-4">
-        <ToggleSwitch v-model="editMode" />
+        <n-switch v-model:value="editMode" />
     </div>
     <div class="card flex justify-center">
-        <Draggable v-if="editMode" v-model="nodeRefs" ref="tree" textKey="label" :defaultOpen="false" class="ml-4">
-            <template #default="{ node, stat }">
-                <span v-if="stat.children.length" @click="stat.open = !stat.open">
-                    {{ stat.open ? "-" : "+" }}
-                </span>
-                <span :class="node.icon"></span>
-                <span class="fa-light fa-chevron-down"></span>
-                {{ node.label }}
-            </template>
-        </Draggable>
-        <Tree v-else :value="nodeRefs" class="w-full md:w-[30rem]" selectionMode="single"></Tree>
+        <n-tree :data="nodeRefs" :draggable="editMode"></n-tree>
     </div>
+    <n-modal :show="showModal">
+        <div>
+            <n-button @click="showModal = false">Close</n-button>
+            <EmojiPicker :native="true" @select="onSelectEmoji" disable-skin-tones />
+        </div>
+    </n-modal>
+
 </template>
 
 <script setup>
 import { ref, onBeforeMount } from 'vue';
-import { BaseTree, Draggable } from '@he-tree/vue';
-import '@he-tree/vue/style/default.css';
+import { NButton } from 'naive-ui';
 const nodeRefs = ref();
-const icons = ['crown', 'clipboard', 'warehouse', 'trophy', 'bullseye', 'briefcase', 'bell', 'envelope', 'palette', 'sun', 'car', 'building', 'gauge', 'thumbtack', 'barcode', 'face-smile'];
+// const icons = ['crown', 'clipboard', 'warehouse', 'trophy', 'bullseye', 'briefcase', 'bell', 'envelope', 'palette', 'sun', 'car', 'building', 'gauge', 'thumbtack', 'barcode', 'face-smile'];
+// import picker compopnent
+import EmojiPicker from 'vue3-emoji-picker';
+// import css
+import 'vue3-emoji-picker/css';
+
+const emojis = ['🏪', '😜', ' 🌒', '⛵️', '🔮', '🎉', '🌟', '🐫', '🖐', '🐗', '🚍', '📚', '😋', '4️⃣', '🌘']
 
 const editMode = ref(false);
+const showModal = ref(false);
+
+const onSelectEmoji = (emoji) => {
+    console.log(emoji.i);
+};
 
 onBeforeMount(async () => {
     // NodeService.getTreeNodes().then((data) => (nodes.value = data));
@@ -32,11 +39,13 @@ onBeforeMount(async () => {
     if (response.status === 200) {
         const data = await response.json();
         // console.log(data);
-        const datum = Object.entries(data).map((x, z) => ({
+        const datum = Object.entries(data).map((x) => ({
             key: x[0] || 'unsorted',
             label: x[0] || 'unsorted',
             // data: 'Documents Folder',
-            icon: 'pi pi-fw pi-' + (icons.shift() || 'bookmark-fill'),
+            // icon: 'pi pi-fw pi-' + (icons.shift() || 'bookmark-fill'),
+            prefix: () =>
+                h(NButton, { text: true, type: 'primary', onClick: () => { showModal.value = true; } }, { default: () => (emojis.shift() || '🤪') }),
             children: x[1].map(y => ({
                 key: y.stem || 'unnamed',
                 label: y.stem || 'unnamed',
