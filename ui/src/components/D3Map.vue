@@ -1,23 +1,37 @@
 <template>
-  <!-- <h3>{{ streetObject?.name }} [{{ streetObject?.freq }}] 🏅{{ curIndex + 1 }}</h3> -->
-  <!-- <h5> <i class="pi pi-info-circle"></i> {{ unit }} {{ num }} </h5> -->
-  <Checkbox @change="showHideCaptions" v-model="captionsVisible" :binary="true" />
+  <div style="min-width:500px">
+    <!-- <h3>{{ streetObject?.name }} [{{ streetObject?.freq }}] 🏅{{ curIndex + 1 }}</h3> -->
+    <!-- <h5> <i class="pi pi-info-circle"></i> {{ unit }} {{ num }} </h5> -->
+    <n-checkbox @update:checked="showHideCaptions" :default-checked="true" />
 
-  <div ref="mapRef" id="map">
-    <svg ref="svgRef" :width="svgWidth" :height="svgHeight" style="font-family: 'Open Sans'">
-      <text x="0" y="15" class="title">{{ unit }}</text>
-      <text x="250" y="25" class="quantity">{{ num }}</text>
-      <g v-if="vuerouter.name === 'Top'">
-        <text x="0" y="350">🏅{{ id }} ({{ streetObject?.freq }})</text>
-        <text x="0" y="390" class="street">{{ streetObject?.name }}</text>
-      </g>
-    </svg>
+    <div ref="mapRef" id="map">
+      <svg ref="svgRef" :width="svgWidth" :height="svgHeight" style="font-family: 'Open Sans'">
+        <text x="0" y="15" class="title">{{ unit }}</text>
+        <text x="250" y="25" class="quantity">{{ num }}</text>
+        <g v-if="vuerouter.name === 'Top'">
+          <text x="0" y="350">🏅{{ id }} ({{ streetObject?.freq }})</text>
+          <text x="0" y="390" class="street">{{ streetObject?.name }}</text>
+        </g>
+      </svg>
+    </div>
+    <n-button-group v-if="vuerouter.name === 'Top'">
+      <n-button @click="loadPrevious" :disabled="id < 2">
+        <template #icon>
+          <n-icon :component="ArrowLeft" />
+        </template>
+      </n-button>
+      <n-button @click="chartClicked" link severity="secondary">
+        <template #icon>
+          <n-icon :component="Download" />
+        </template>
+      </n-button>
+      <n-button @click="loadNext">
+        <template #icon>
+          <n-icon :component="ArrowRight" />
+        </template>
+      </n-button>
+    </n-button-group>
   </div>
-  <ButtonGroup v-if="vuerouter.name === 'Top'">
-    <Button @click="loadPrevious" :disabled="id < 2" icon="pi pi-arrow-left"></Button>
-    <Button @click="chartClicked" link severity="secondary" icon="pi pi-save" />
-    <Button @click="loadNext" icon="pi pi-arrow-right"></Button>
-  </ButtonGroup>
 </template>
 
 <script setup lang="ts">
@@ -25,10 +39,9 @@ import { onMounted, onBeforeMount, ref, toRaw } from 'vue';
 import router from '../router';
 import store from '../store';
 import * as d3 from 'd3';
+import { ArrowRight, ArrowLeft, Download } from '@vicons/carbon';
 import { useRoute } from 'vue-router';
 import { onBeforeRouteUpdate } from 'vue-router';
-
-const captionsVisible = ref(true);
 
 const vuerouter = useRoute();
 // console.log(vuerouter.name);
@@ -52,8 +65,8 @@ const streetObject = ref<IStreetInfo>();
 const getCounts = (hash: keyable, num: number) => hash?.[num] || [0, 0];
 const renderPercent = (x: number) => String(parseFloat(Number(x).toFixed(4)));
 
-const showHideCaptions = () => {
-  d3.selectAll('.captions').classed('hidden', !captionsVisible.value);
+const showHideCaptions = (checked: boolean) => {
+  d3.selectAll('.captions').classed('hidden', !checked);
 };
 
 const serializeSVG = (svg: HTMLElement | SVGElement) => {
@@ -192,8 +205,9 @@ const loadStreet = () => {
   const path = d3.geoPath().projection(projection);
 
   // vuerouter.name === 'Top'
-  streetObject.value = Object.values(store.freq.streets[id.value-1])?.[0] as IStreetInfo;
-  const dataset = (vuerouter.name === 'Top' ? streetObject.value: store.freq).regions;
+  streetObject.value = store.freq.streets?.[id.value - 1] as IStreetInfo;
+
+  const dataset = (vuerouter.name === 'Top' ? streetObject.value : store.freq).regions;
   const values = Object.values(dataset).map(x => x[1]);
   const ext = d3.extent(values) as Array<number>;
   const last = ext[1];
@@ -220,7 +234,7 @@ const loadStreet = () => {
         return colorize(getCounts(dataset, d.properties.terytId)[1]);
       })
       .attr("d", path as any)
-      .on("mouseover", (e, d: any) => {
+      .on("mouseover", (e: any, d: any) => {
         unit.value = d.properties.nazwa + ' w-wo';
         const counts = getCounts(dataset, d.properties.terytId);
         // console.log(counts);
@@ -254,7 +268,7 @@ const loadStreet = () => {
       .attr("text-anchor", "middle")
       .text((d: any) => d.properties.nazwa);
 
-    showHideCaptions();
+    showHideCaptions(true);
 
     const legend = carta.append('g');
 
@@ -264,11 +278,11 @@ const loadStreet = () => {
       .selectAll('.legend')
       .data(d3.ticks(0, Math.ceil(last), ticksNumber))
       .enter().append('rect')
-      .attr('x', d => legendOffsetX + d * legendCellWidth + 'px')
+      .attr('x', (d: any) => legendOffsetX + d * legendCellWidth + 'px')
       .attr("y", legendOffsetY)
       .attr("width", legendCellWidth)
       .attr("height", legendHeight)
-      .attr('fill', d => {
+      .attr('fill', (d: any) => {
         // console.log(d, colorize(d));
         return colorize(d)
       });
@@ -279,7 +293,7 @@ const loadStreet = () => {
     legend
       .append("g")
       .attr("transform", `translate(${legendOffsetX},${legendOffsetY + legendHeight})`)
-      .call(d3.axisBottom(sc).ticks(ticksNumber).tickFormat((d, i) => renderPercent(d as number))); // Math.round(last / 5)
+      .call(d3.axisBottom(sc).ticks(ticksNumber).tickFormat((d: any, i: any) => renderPercent(d as number))); // Math.round(last / 5)
   }
 };
 
@@ -349,5 +363,9 @@ onBeforeRouteUpdate(async (to, from) => {
   stroke: white;
   stroke-width: 2.5px;
   opacity: 0.9;
+}
+
+:deep(.hidden) {
+  display: none;
 }
 </style>
