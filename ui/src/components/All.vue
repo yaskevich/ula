@@ -7,6 +7,9 @@
         index + 1
     }}. {{ val.name }}</n-button>
             <!-- <InputText v-if="showEditor === index" type="text" v-model="value" size="small" /> -->
+            <n-tag type="warning" size="small" v-if="val.name in cats">
+                {{ cats[val.name] || 'unsorted' }}
+            </n-tag>
             <n-tag type="info" size="small" v-if="val.name in dict">
                 {{ dict[val.name] }}
             </n-tag>
@@ -27,6 +30,7 @@ import store from '../store';
 import { useRouter, useRoute } from 'vue-router';
 
 const dict = ref();
+const cats = ref({} as keyable);
 const showEditor = ref();
 const router = useRouter();
 const route = useRoute();
@@ -41,12 +45,26 @@ onBeforeMount(async () => {
     const response = await fetch('/api/dict');
     if (response.status === 200) {
         const data = await response.json();
-        // console.log(data);
         dict.value = data;
+        // isLoaded.value = true;
+    } else {
+        console.log("fetching error");
+    }
+    const response2 = await fetch('/api/onto');
+    if (response.status === 200) {
+        const data = await response2.json();
+        // dict.value = data;
+        const dataCats = {} as keyable;
+        for (const item in data) {
+            console.log(item, typeof data[item]);
+            data[item].forEach((x: any) => dataCats[x.name] = item);
+        }
+        cats.value = dataCats;
         isLoaded.value = true;
     } else {
         console.log("fetching error");
     }
+
 });
 
 </script>
