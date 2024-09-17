@@ -5,6 +5,7 @@ import bodyParser from 'body-parser';
 import fs from 'fs';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
+import re from "@alexfrankcodes/random-emoji";
 
 dotenv.config();
 
@@ -16,26 +17,26 @@ const dictPath = path.join(__dirname, '..', 'data', 'dict.json')
 const ontoPath = path.join(__dirname, '..', 'data', 'onto.json')
 
 
-let db = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cats.json'))).filter(x => !parseInt(x.stem));
+// let db = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cats.json'))).filter(x => !parseInt(x.stem));
 // console.log(db);
 
-const ontology = {};
-const dict = {};
+// const ontology = {};
+// const dict = {};
 
-db.forEach(el => {
-  const item = { 'stem': el.stem, name: el.name };
-  if (el.feature === 'wishful') {
-    item['wishful'] = true;
-  }
-  if (el.type in ontology) {
-    ontology[el.type].push(item)
-  } else {
-    ontology[el.type] = [item]
-  }
+// db.forEach(el => {
+//   const item = { 'stem': el.stem, name: el.name };
+//   if (el.feature === 'wishful') {
+//     item['wishful'] = true;
+//   }
+//   if (el.type in ontology) {
+//     ontology[el.type].push(item)
+//   } else {
+//     ontology[el.type] = [item]
+//   }
 
-  dict[el.name] = el.stem;
-  // console.log(el.stem, el.type, el.feature);
-});
+//   dict[el.name] = el.stem;
+//   // console.log(el.stem, el.type, el.feature);
+// });
 
 // console.log(ontology);
 // console.log(dict);
@@ -58,14 +59,22 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.get('/api/dict', async (req, res) => {
   const data = fs.readFileSync(dictPath, "utf8");
-  console.log(data);
+  // console.log(data);
   res.json(JSON.parse(data));
 });
 
 app.get('/api/onto', async (req, res) => {
-  const data = fs.readFileSync(ontoPath, "utf8");
-  console.log(data);
-  res.json(JSON.parse(data));
+  const data = JSON.parse(fs.readFileSync(ontoPath, "utf8"));
+  const parsed = {};
+  // const emojis = ['🏪', '😜', ' 🌒', '⛵️', '🔮', '🎉', '🌟', '🐫', '🖐', '🐗', '🚍', '📚', '😋', '4️⃣', '🌘'];
+
+  Object.entries(data).forEach(x => {
+    const rels = {};
+    x[1].forEach(y => rels[y.stem] = re.random(1).shift());
+    parsed[x[0]] = { emoji: re.random(1).shift(), children: rels };
+  })
+  // console.log(parsed);
+  res.json(parsed);
 });
 
 app.post('/api/record', async (req, res) => {
