@@ -5,7 +5,11 @@ import bodyParser from 'body-parser';
 import fs from 'fs';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
+import sqlite3 from 'sqlite3'
+import { open } from 'sqlite'
 import re from "@alexfrankcodes/random-emoji";
+
+
 
 dotenv.config();
 
@@ -16,6 +20,11 @@ const __package = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'
 const dictPath = path.join(__dirname, '..', 'data', 'dict.json')
 const ontoPath = path.join(__dirname, '..', 'data', 'onto.json')
 
+const db = await open({ filename: path.join(__dirname, '..','data', 'data.db'), driver: sqlite3.cached.Database });
+
+await db.exec('CREATE TABLE IF NOT EXISTS ontology (id INTEGER PRIMARY KEY AUTOINCREMENT, pl TEXT, en TEXT, level INTEGER, parent INTEGER NOT NULL DEFAULT 0)');
+
+// await db.close();
 
 // let db = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cats.json'))).filter(x => !parseInt(x.stem));
 // console.log(db);
