@@ -9,8 +9,8 @@
         <text x="0" y="15" class="title">{{ unit }}</text>
         <text x="250" y="25" class="quantity">{{ num }}</text>
         <g v-if="vuerouter.name === 'Top'">
-          <text x="0" y="350">🏅{{ id }} ({{ streetObject?.freq }})</text>
-          <text x="0" y="390" class="street">{{ streetObject?.name }}</text>
+          <text x="0" y="410">🏅{{ id }} ({{ streetObject?.freq }})</text>
+          <text x="0" y="440" class="street">{{ streetObject?.name }}</text>
         </g>
       </svg>
     </div>

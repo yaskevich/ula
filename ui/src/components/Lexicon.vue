@@ -3,7 +3,7 @@
         <n-switch v-model:value="editMode" />
     </div>
     <div class="card flex justify-center">
-        <n-tree :data="nodeRefs" :draggable="editMode"></n-tree>
+        <n-tree :data="nodeRefs" :draggable="editMode" @drop="handleDrop"></n-tree>
     </div>
     <n-modal :show="showModal">
         <div>
@@ -14,43 +14,42 @@
 
 </template>
 
-<script setup>
-import { ref, onBeforeMount } from 'vue';
+<script setup lang="ts">
+import { ref, onBeforeMount, h } from 'vue';
 import { NButton } from 'naive-ui';
-const nodeRefs = ref();
-// const icons = ['crown', 'clipboard', 'warehouse', 'trophy', 'bullseye', 'briefcase', 'bell', 'envelope', 'palette', 'sun', 'car', 'building', 'gauge', 'thumbtack', 'barcode', 'face-smile'];
-// import picker compopnent
+import type { TreeDropInfo, TreeOption } from 'naive-ui';
 import EmojiPicker from 'vue3-emoji-picker';
-// import css
 import 'vue3-emoji-picker/css';
-
-const emojis = ['🏪', '😜', ' 🌒', '⛵️', '🔮', '🎉', '🌟', '🐫', '🖐', '🐗', '🚍', '📚', '😋', '4️⃣', '🌘']
 
 const editMode = ref(false);
 const showModal = ref(false);
+const nodeRefs = ref();
 
-const onSelectEmoji = (emoji) => {
+const onSelectEmoji = (emoji: any) => {
     console.log(emoji.i);
 };
+
+const handleDrop = ({ node, dragNode, dropPosition }: TreeDropInfo) => {
+    console.log(node, dragNode);
+}
 
 onBeforeMount(async () => {
     // NodeService.getTreeNodes().then((data) => (nodes.value = data));
     const response = await fetch('/api/onto');
     if (response.status === 200) {
         const data = await response.json();
-        // console.log(data);
-        const datum = Object.entries(data).map((x) => ({
+        const datum = Object.entries(data).map((x: any) => ({
             key: x[0] || 'unsorted',
             label: x[0] || 'unsorted',
             // data: 'Documents Folder',
-            // icon: 'pi pi-fw pi-' + (icons.shift() || 'bookmark-fill'),
             prefix: () =>
-                h(NButton, { text: true, type: 'primary', onClick: () => { showModal.value = true; } }, { default: () => (emojis.shift() || '🤪') }),
-            children: x[1].map(y => ({
-                key: y.stem || 'unnamed',
-                label: y.stem || 'unnamed',
+                h(NButton, { text: true, type: 'primary', onClick: () => { showModal.value = true; } }, { default: () => x[1].emoji }),
+            children: Object.entries(x[1].children).map(y => ({
+                key: y[0] || 'unnamed',
+                label: y[0] ? `${y[0]}` : 'unnamed',
                 // data: 'Documents Folder',
-                icon: 'pi pi-fw pi-bookmark',
+                prefix: () =>
+                    h(NButton, { text: true, type: 'primary', onClick: () => { showModal.value = true; } }, { default: () => y[1] }),
             }))
         }));
         nodeRefs.value = datum;

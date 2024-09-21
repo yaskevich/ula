@@ -1,19 +1,23 @@
 <template>
     <!-- <h2>Analysis of the street names of Poland</h2> -->
     <div v-if="isLoaded">
-        <n-space v-for="(val, index) in store.freq.streets.slice(0, limit)">
-            <n-button :text="route.fullPath !== `/country/${index + 1}`"
-                @click="router.push(`/country/${index + 1}`)">{{
+        <n-space vertical v-for="(val, index) in store.freq.streets.slice(0, limit)">
+            <n-space justify="space-between" style="max-width:300px">
+                <n-button :text="route.fullPath !== `/country/${index + 1}`"
+                    @click="router.push(`/country/${index + 1}`)">{{
         index + 1
     }}. {{ val.name }}</n-button>
-            <!-- <InputText v-if="showEditor === index" type="text" v-model="value" size="small" /> -->
-            <n-tag type="warning" size="small" v-if="val.name in cats">
-                {{ cats[val.name] || 'unsorted' }}
-            </n-tag>
-            <n-tag type="info" size="small" v-if="val.name in dict">
-                {{ dict[val.name] }}
-            </n-tag>
-            <n-button text icon="pi pi-pencil" @click="showEditor = index"></n-button>
+                <!-- <InputText v-if="showEditor === index" type="text" v-model="value" size="small" /> -->
+                <div>
+                    <n-tag :type="cats[val.name] ? 'warning' : 'error'" size="small" v-if="val.name in cats">
+                        {{ cats[val.name] || 'unsorted' }}
+                    </n-tag>
+                    <n-tag type="info" size="small" v-if="val.name in dict">
+                        {{ dict[val.name] }}
+                    </n-tag>
+                </div>
+            </n-space>
+            <!-- <n-button text icon="pi pi-pencil" @click="showEditor = index"></n-button> -->
         </n-space>
     </div>
     <!--
@@ -56,7 +60,6 @@ onBeforeMount(async () => {
         // dict.value = data;
         const dataCats = {} as keyable;
         for (const item in data) {
-            console.log(item, typeof data[item]);
             data[item].forEach((x: any) => dataCats[x.name] = item);
         }
         cats.value = dataCats;
