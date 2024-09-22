@@ -14,23 +14,26 @@
         </g>
       </svg>
     </div>
-    <n-button-group v-if="vuerouter.name === 'Top'">
-      <n-button @click="loadPrevious" :disabled="id < 2">
-        <template #icon>
-          <n-icon :component="ArrowLeft" />
-        </template>
-      </n-button>
-      <n-button @click="chartClicked" link severity="secondary">
-        <template #icon>
-          <n-icon :component="Download" />
-        </template>
-      </n-button>
-      <n-button @click="loadNext">
-        <template #icon>
-          <n-icon :component="ArrowRight" />
-        </template>
-      </n-button>
-    </n-button-group>
+    <n-space>
+      <n-button-group v-if="vuerouter.name === 'Top'">
+        <n-button @click="loadPrevious" :disabled="id < 2">
+          <template #icon>
+            <n-icon :component="ArrowLeft" />
+          </template>
+        </n-button>
+        <n-button @click="chartClicked" link severity="secondary">
+          <template #icon>
+            <n-icon :component="Download" />
+          </template>
+        </n-button>
+        <n-button @click="loadNext">
+          <template #icon>
+            <n-icon :component="ArrowRight" />
+          </template>
+        </n-button>
+      </n-button-group>
+      <n-button @click="animate">{{ myInterval ? 'Stop' : 'Run' }}</n-button>
+    </n-space>
   </div>
 </template>
 
@@ -62,6 +65,8 @@ const num = ref('');
 const svgRef = ref(null);
 const mapRef = ref<HTMLElement | null>(null);
 const streetObject = ref<IStreetInfo>();
+const myInterval = ref();
+
 const getCounts = (hash: keyable, num: number) => hash?.[num] || [0, 0];
 const renderPercent = (x: number) => String(parseFloat(Number(x).toFixed(4)));
 
@@ -205,10 +210,10 @@ const loadStreet = () => {
   const path = d3.geoPath().projection(projection);
 
   // vuerouter.name === 'Top'
-  streetObject.value = store.freq.streets?.[id.value - 1] as IStreetInfo;
-
-  const dataset = (vuerouter.name === 'Top' ? streetObject.value : store.freq).regions;
-  const values = Object.values(dataset).map(x => x[1]);
+  streetObject.value = (store.freq as keyable).streets?.[id.value - 1] as IStreetInfo;
+  const obj = vuerouter.name === 'Top' ? streetObject.value : store.freq;
+  const dataset = (obj as keyable).regions;
+  const values = Object.values(dataset).map((x: any) => x[1]);
   const ext = d3.extent(values) as Array<number>;
   const last = ext[1];
   if (ext[0] !== undefined && ext[1] !== undefined) {
@@ -243,8 +248,6 @@ const loadStreet = () => {
       .on("mouseout", function () {
         unit.value = num.value = '';
       });
-
-
 
     carta.append("g").attr('class', 'captions')
       .selectAll("text")
@@ -289,7 +292,6 @@ const loadStreet = () => {
 
     const sc = d3.scaleLinear().domain([0, last]).range([0, last * legendCellWidth]);
 
-
     legend
       .append("g")
       .attr("transform", `translate(${legendOffsetX},${legendOffsetY + legendHeight})`)
@@ -306,6 +308,18 @@ const loadPrevious = () => {
   if (id.value) {
     id.value -= 1;
     router.push(`/country/${id.value}`)
+  }
+};
+
+const animate = () => {
+  if (myInterval.value) {
+    clearInterval(myInterval.value);
+    myInterval.value = null;
+  } else {
+    myInterval.value = setInterval(function () {
+      // console.log("next");
+      loadNext();
+    }, 2000);
   }
 };
 
