@@ -20,9 +20,9 @@ const __package = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'
 const dictPath = path.join(__dirname, '..', 'data', 'dict.json')
 const ontoPath = path.join(__dirname, '..', 'data', 'onto.json')
 
-const db = await open({ filename: path.join(__dirname, '..','data', 'data.db'), driver: sqlite3.cached.Database });
+const db = await open({ filename: path.join(__dirname, '..', 'data', 'data.db'), driver: sqlite3.cached.Database });
 
-await db.exec('CREATE TABLE IF NOT EXISTS ontology (id INTEGER PRIMARY KEY AUTOINCREMENT, pl TEXT, en TEXT, level INTEGER, parent INTEGER NOT NULL DEFAULT 0)');
+// await db.exec('CREATE TABLE IF NOT EXISTS ontology (id INTEGER PRIMARY KEY AUTOINCREMENT, emoji TEXT, title TEXT, en TEXT, names JSON, level INTEGER, parent INTEGER NOT NULL DEFAULT 0, leaf BOOLEAN DEFAULT(FALSE))');
 
 // await db.close();
 
@@ -54,6 +54,56 @@ await db.exec('CREATE TABLE IF NOT EXISTS ontology (id INTEGER PRIMARY KEY AUTOI
 // fs.writeFileSync(ontoPath, JSON.stringify(ontology));
 
 // environment variables
+
+const getEmoji = () => [...re.random()].shift();
+
+const getOntology = async () => {
+  const data = JSON.parse(fs.readFileSync(ontoPath, "utf8"));
+  const parsed = {};
+  // const emojis = ['🏪', '😜', ' 🌒', '⛵️', '🔮', '🎉', '🌟', '🐫', '🖐', '🐗', '🚍', '📚', '😋', '4️⃣', '🌘'];
+
+  for (let x of Object.entries(data)) {
+    const rels = {};
+    const name = x[0] || "<unsorted>";
+    const emo = getEmoji();
+    const result = await db.run(
+      'INSERT INTO ontology (emoji, title, en) VALUES (?, ?, ?)',
+      emo, name, name
+    );
+    const names = {};
+    for (const y of x[1]) {
+      const word = y.stem.trim();
+      if (word) {
+        names[word] = word in names ? [...names[word], y.name] : [y.name]
+        rels[word] = { emoji: getEmoji(), stem: word, names: names[word], parent: result.lastID };
+      }
+    }
+    const item = { emoji: emo, children: rels };
+
+    for (const z in rels) {
+      const v = rels[z];
+      const result = await db.run(
+        'INSERT INTO ontology (emoji, title, en, names, parent, leaf) VALUES (?, ?, ?, ?, ?, ?)',
+        v.emoji, v.stem, v.stem, JSON.stringify(v.names), v.parent, true
+      );
+    }
+  }
+};
+
+// await db.exec('CREATE TABLE ontology (id INTEGER PRIMARY KEY AUTOINCREMENT, emoji TEXT, title TEXT, en TEXT, names JSON, level INTEGER, parent INTEGER NOT NULL DEFAULT 0, leaf BOOLEAN DEFAULT(FALSE))');
+// getOntology();
+
+
+const toTree = arr => {
+  const obj = Object.create(null);
+  arr.forEach(x => obj[x.id] = { ...x, children: [] });
+  const res = [];
+  arr.forEach(x => {
+    x.parent ? obj[x.parent].children.push(obj[x.id]) : res.push(obj[x.id])
+  });
+  return res;
+};
+
 const port = process.env.PORT || 8080;
 const appName = __package?.name || String(port);
 
@@ -73,17 +123,8 @@ app.get('/api/dict', async (req, res) => {
 });
 
 app.get('/api/onto', async (req, res) => {
-  const data = JSON.parse(fs.readFileSync(ontoPath, "utf8"));
-  const parsed = {};
-  // const emojis = ['🏪', '😜', ' 🌒', '⛵️', '🔮', '🎉', '🌟', '🐫', '🖐', '🐗', '🚍', '📚', '😋', '4️⃣', '🌘'];
-
-  Object.entries(data).forEach(x => {
-    const rels = {};
-    x[1].forEach(y => rels[y.stem] = re.random(1).shift());
-    parsed[x[0]] = { emoji: re.random(1).shift(), children: rels };
-  })
-  // console.log(parsed);
-  res.json(parsed);
+  const result = await db.all('SELECT * FROM ontology ORDER BY title');
+  res.json(toTree(result));
 });
 
 app.post('/api/record', async (req, res) => {
