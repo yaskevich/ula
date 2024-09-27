@@ -5,7 +5,7 @@
 
     <div class="card flex justify-center">
         <n-tree key-field="id" label-field="title" :render-prefix="renderPrefix" :data="nodeRefs" :draggable="editMode"
-            @drop="handleDrop"></n-tree>
+            block-line :override-default-node-click-behavior="override" @drop="handleDrop"></n-tree>
     </div>
     <n-modal :show="showModal">
         <div>
@@ -20,11 +20,13 @@
 import { ref, onBeforeMount, h } from 'vue';
 import { NButton } from 'naive-ui';
 import type { TreeDropInfo, TreeOption } from 'naive-ui';
+import type { TreeOverrideNodeClickBehavior } from 'naive-ui';
 import EmojiPicker from 'vue3-emoji-picker';
 import 'vue3-emoji-picker/css';
 
 const editMode = ref(false);
 const showModal = ref(false);
+const nodesList = ref();
 const nodeRefs = ref();
 
 const onSelectEmoji = (emoji: any) => {
@@ -35,14 +37,48 @@ const renderPrefix = ({ option }: { option: TreeOption }) => {
     return h(NButton, { text: true, type: 'primary', onClick: () => { showModal.value = true; } }, { default: () => option.emoji });
 }
 
-const handleDrop = ({ node, dragNode, dropPosition }: TreeDropInfo) => {
-    console.log(node, dragNode);
+const handleDrop = ({ node, dragNode, dropPosition, event }: TreeDropInfo) => {
+    console.log(node, dragNode, dropPosition, event);
+    // console.log(node.leaf, dragNode.leaf);
+    if (!node?.leaf && dragNode?.leaf) {
+        node.children?.push(dragNode);
+    } else {
+        console.log("reject");
+    }
+    
+    // console.log(nodeRefs.value);
+    // set parent of dragNode
+    // find parentNode
+    // remove dragNode from parentNode
+    return false;
 };
+
+const override: TreeOverrideNodeClickBehavior = ({ option }) => {
+    if (option.children) {
+        return 'toggleExpand'
+    }
+    return 'default'
+};
+
+const toTree = (arr: any) => {
+    const obj = Object.create(null);
+    arr.forEach((x: any) => obj[x.id] = { ...x, });
+    const res: any = [];
+    arr.forEach((x: any) => {
+        x.parent ? (obj[x.parent]?.children ? obj[x.parent].children.push(obj[x.id]) : obj[x.parent].children = [obj[x.id]]) : res.push(obj[x.id])
+    });
+    return res;
+};
+
 
 onBeforeMount(async () => {
     const response = await fetch('/api/onto');
     if (response.status === 200) {
-        nodeRefs.value = await response.json();
+        const data = await response.json();
+        nodesList.value = data;
+        nodeRefs.value = toTree(data);
+        console.log(nodeRefs.value);
+
     } else {
         console.log("fetching error");
     }
