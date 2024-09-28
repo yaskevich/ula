@@ -9,8 +9,6 @@ import sqlite3 from 'sqlite3'
 import { open } from 'sqlite'
 import re from "@alexfrankcodes/random-emoji";
 
-
-
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -94,16 +92,6 @@ const getOntology = async () => {
 // getOntology();
 
 
-const toTree = arr => {
-  const obj = Object.create(null);
-  arr.forEach(x => obj[x.id] = { ...x, children: [] });
-  const res = [];
-  arr.forEach(x => {
-    x.parent ? obj[x.parent].children.push(obj[x.id]) : res.push(obj[x.id])
-  });
-  return res;
-};
-
 const port = process.env.PORT || 8080;
 const appName = __package?.name || String(port);
 
@@ -122,14 +110,23 @@ app.get('/api/dict', async (req, res) => {
   res.json(JSON.parse(data));
 });
 
-app.get('/api/onto', async (req, res) => {
-  const result = await db.all('SELECT * FROM ontology ORDER BY title');
-  res.json(toTree(result));
+app.post('/api/topic', async (req, res) => {
+  // console.log(req.body);
+  const result = await db.run(
+    'UPDATE ontology SET emoji = ? , title = ?, en = ?, names = ?, parent = ? WHERE id = ?',
+    req.body.emoji,
+    req.body.title,
+    req.body.en,
+    req.body.names,
+    req.body.parent,
+    req.body.id
+  );
+  res.json(result);
 });
 
-app.post('/api/record', async (req, res) => {
-  const word = req.body.word + '\n';
-  res.send('ok');
+app.get('/api/onto', async (req, res) => {
+  const result = await db.all('SELECT * FROM ontology ORDER BY title');
+  res.json(result);
 });
 
 app.listen(port);
