@@ -24,7 +24,7 @@ import type { TreeOverrideNodeClickBehavior } from 'naive-ui';
 import EmojiPicker from 'vue3-emoji-picker';
 import 'vue3-emoji-picker/css';
 
-const editMode = ref(false);
+const editMode = ref(true);
 const showModal = ref(false);
 const nodesList = ref();
 const nodeRefs = ref();
@@ -35,22 +35,33 @@ const onSelectEmoji = (emoji: any) => {
 
 const renderPrefix = ({ option }: { option: TreeOption }) => {
     return h(NButton, { text: true, type: 'primary', onClick: () => { showModal.value = true; } }, { default: () => option.emoji });
-}
+};
 
-const handleDrop = ({ node, dragNode, dropPosition, event }: TreeDropInfo) => {
+const handleDrop = async ({ node, dragNode, dropPosition, event }: TreeDropInfo) => {
     console.log(node, dragNode, dropPosition, event);
     // console.log(node.leaf, dragNode.leaf);
     if (!node?.leaf && dragNode?.leaf) {
-        node.children?.push(dragNode);
+        const arr = nodeRefs.value.find((x: any) => x.id === dragNode.parent).children;
+        const index = arr.findIndex((x: any) => x.id === dragNode.id);
+        arr.splice(index, 1);
+        const newNode = dragNode;
+        newNode.parent = node.id;
+        node.children?.push(newNode);
+        console.log("update", node.id, dragNode.id);
+        const response = await fetch('/api/topic', {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json', // this needs to be defined
+            },
+            body: JSON.stringify(newNode),
+        });
+        if (response.status === 200) {
+            const data = await response.json();
+            console.log("move", data);
+        }
     } else {
         console.log("reject");
     }
-    
-    // console.log(nodeRefs.value);
-    // set parent of dragNode
-    // find parentNode
-    // remove dragNode from parentNode
-    return false;
 };
 
 const override: TreeOverrideNodeClickBehavior = ({ option }) => {
@@ -77,8 +88,7 @@ onBeforeMount(async () => {
         const data = await response.json();
         nodesList.value = data;
         nodeRefs.value = toTree(data);
-        console.log(nodeRefs.value);
-
+        // console.log(nodeRefs.value);
     } else {
         console.log("fetching error");
     }
