@@ -1,11 +1,11 @@
 <template>
     <!-- <h2>Analysis of the street names of Poland</h2> -->
     <div v-if="isLoaded">
-        <n-space vertical v-for="(val, index) in store.freq.streets.slice(0, limit)">
+        <n-space vertical v-for="(val, index) in (store.freq as any).streets.slice(0, limit)">
             <n-space justify="space-between" style="max-width:300px">
                 <n-button :text="route.fullPath !== `/country/${index + 1}`"
                     @click="router.push(`/country/${index + 1}`)">{{
-                    index + 1
+                        index + 1
                     }}. {{ val.name }}</n-button>
                 <!-- <InputText v-if="showEditor === index" type="text" v-model="value" size="small" /> -->
                 <div>
@@ -55,10 +55,11 @@ onBeforeMount(async () => {
     } else {
         console.log("fetching error");
     }
-    const response2 = await fetch('/api/onto/flat');
+    const response2 = await fetch('/api/onto');
     if (response.status === 200) {
-        const data = await response2.json();
-        console.log(data);
+        const fetched = await response2.json();
+        const data = Object.assign({}, ...fetched.map((x: any) => ({ [x['id']]: x })))
+        // console.log(data);
         obj.value = data;
         // dict.value = data;
         const dataCats = {} as keyable;
