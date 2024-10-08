@@ -1,4 +1,17 @@
 <template>
+    <n-modal v-model:show="showModal">
+        <n-card style="width: 600px" title="Enter the stem" :bordered="false" size="huge" role="dialog"
+            aria-modal="true">
+            <template #header-extra>
+                <!-- Oops! -->
+            </template>
+            <n-input @keyup.enter="getName" v-model:value="value" type="text" placeholder="stem" />
+            <!-- <n-select v-model:value="multipleSelectValue" filterable tag :options="options" /> -->
+            <template #footer>
+                <!-- Footer -->
+            </template>
+        </n-card>
+    </n-modal>
     <!-- <h2>Analysis of the street names of Poland</h2> -->
     <div v-if="isLoaded">
         <n-space vertical v-for="(val, index) in (store.freq as any).streets.slice(0, limit)">
@@ -15,6 +28,10 @@
                     <n-tag type="info" size="small" v-if="val.name in dict">
                         {{ dict[val.name] }}
                     </n-tag>
+
+                    <n-button v-else size="tiny" @click="showModal = true">
+                        Annotate
+                    </n-button>
                 </div>
             </n-space>
             <!-- <n-button text icon="pi pi-pencil" @click="showEditor = index"></n-button> -->
@@ -33,6 +50,7 @@ import { ref, onBeforeMount } from 'vue';
 import store from '../store';
 import { useRouter, useRoute } from 'vue-router';
 
+const showModal = ref(false);
 const dict = ref();
 const cats = ref({} as keyable);
 const obj = ref();
@@ -42,9 +60,26 @@ const route = useRoute();
 const limit = Number(route.params.limit) || 500;
 console.log(route.params.limit);
 
+const getName = () => {
+    console.log(value.value);
+}
+
+const multipleSelectValue = ref(null);
+
 const value = ref('');
 
 const isLoaded = ref(false);
+
+const options = [
+    {
+        label: 'tag1',
+        value: 'id1',
+        disabled: true
+    },
+    {
+        label: 'tag2',
+        value: 'id2'
+    },];
 
 onBeforeMount(async () => {
     const response = await fetch('/api/dict');
