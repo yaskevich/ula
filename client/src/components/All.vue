@@ -5,7 +5,12 @@
             <template #header-extra>
                 <!-- Oops! -->
             </template>
-            <n-input @keyup.enter="getName" v-model:value="value" type="text" placeholder="stem" />
+            <n-input-group>
+                <n-input @keyup.enter="saveStem" v-model:value="stem.title" type="text" placeholder="stem" />
+                <n-button @click="saveStem">
+                    Save
+                </n-button>
+            </n-input-group>
             <!-- <n-select v-model:value="multipleSelectValue" filterable tag :options="options" /> -->
             <template #footer>
                 <!-- Footer -->
@@ -22,14 +27,15 @@
                     }}. {{ val.name }}</n-button>
                 <!-- <InputText v-if="showEditor === index" type="text" v-model="value" size="small" /> -->
                 <div>
-                    <n-tag :type="cats[val.name] ? 'warning' : 'error'" size="small" v-if="val.name in cats">
+                    <n-tag :type="obj[cats[val.name]]?.title === '<unsorted>' ? 'error' : 'warning'" size="small"
+                        v-if="val.name in cats">
                         {{ obj[cats[val.name]]?.title || '<error>' }}
                     </n-tag>
                     <n-tag type="info" size="small" v-if="val.name in dict">
                         {{ dict[val.name] }}
                     </n-tag>
 
-                    <n-button v-else size="tiny" @click="showModal = true">
+                    <n-button v-else size="tiny" @click="openModal(val.name, obj[cats[val.name]])">
                         Annotate
                     </n-button>
                 </div>
@@ -54,19 +60,44 @@ const showModal = ref(false);
 const dict = ref();
 const cats = ref({} as keyable);
 const obj = ref();
-const showEditor = ref();
 const router = useRouter();
 const route = useRoute();
 const limit = Number(route.params.limit) || 500;
-console.log(route.params.limit);
+// console.log(route.params.limit);
 
-const getName = () => {
-    console.log(value.value);
-}
+const stem = ref<IInfo>({ title: '', emoji: '', names: [], leaf: 1, en: '', id: null, parent: null });
 
-const multipleSelectValue = ref(null);
+const saveStem = async () => {
+    showModal.value = false;
+    // console.log(stem.value);
+    const response = await fetch('/api/topic', {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json', // this needs to be defined
+        },
+        body: JSON.stringify(stem.value),
+    });
+    if (response.status === 200) {
+        const data = await response.json();
+        console.log("change", data);
+    }
+};
 
-const value = ref('');
+const openModal = (name: string, item: IInfo) => {
+    // console.log(item);
+    showModal.value = true;
+
+    if (item === undefined) {
+        stem.value = { "id": null, "emoji": "", "title": "", "en": "", "names": [], "parent": null, "leaf": 1 }
+    } else {
+        stem.value = item;
+    }
+
+    if (!stem.value?.title) {
+        stem.value.title = name.toLowerCase();
+    }
+};
+
 
 const isLoaded = ref(false);
 
