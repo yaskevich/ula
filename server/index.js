@@ -111,16 +111,23 @@ app.get('/api/dict', async (req, res) => {
 });
 
 app.post('/api/topic', async (req, res) => {
-  // console.log(req.body);
-  const result = await db.run(
-    'UPDATE ontology SET emoji = ? , title = ?, en = ?, names = ?, parent = ? WHERE id = ?',
-    req.body.emoji,
-    req.body.title,
-    req.body.en,
-    req.body.names,
-    req.body.parent,
-    req.body.id
-  );
+  console.log(req.body);
+  // return;
+
+  const result = req.body.id ?
+
+    await db.run(
+      'UPDATE ontology SET emoji = ? , title = ?, en = ?, names = ?, parent = ? WHERE id = ?',
+      req.body.emoji,
+      req.body.title,
+      req.body.en,
+      req.body.names,
+      req.body.parent,
+      req.body.id
+    ) : await db.run(
+      'INSERT INTO ontology (emoji, title, en, names, parent, leaf) VALUES (?, ?, ?, ?, ?, ?)',
+      req.body.emoji || getEmoji(), req.body.title, req.body.title, JSON.stringify(req.body.names), req.body.parent || 65, true
+    );;
   res.json(result);
 });
 
