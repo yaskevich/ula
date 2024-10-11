@@ -35,3 +35,13 @@ interface IStreetInfo {
   regions: keyable;
 }
 
+
+interface IInfo {
+  title: string;
+  en: string;
+  id: number | null;
+  parent: number | null;
+  emoji: string;
+  names: Array<string>;
+  leaf: number;
+}
