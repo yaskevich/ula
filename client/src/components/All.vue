@@ -88,7 +88,7 @@ const openModal = (name: string, item: IInfo) => {
     showModal.value = true;
 
     if (item === undefined) {
-        stem.value = { "id": null, "emoji": "", "title": "", "en": "", "names": [], "parent": null, "leaf": 1 }
+        stem.value = { "id": null, "emoji": "", "title": "", "en": "", "names": [name], "parent": null, "leaf": 1 }
     } else {
         stem.value = item;
     }
@@ -113,26 +113,21 @@ const options = [
     },];
 
 onBeforeMount(async () => {
-    const response = await fetch('/api/dict');
+    const response = await fetch('/api/onto');
     if (response.status === 200) {
-        const data = await response.json();
-        dict.value = data;
-        // isLoaded.value = true;
-    } else {
-        console.log("fetching error");
-    }
-    const response2 = await fetch('/api/onto');
-    if (response.status === 200) {
-        const fetched = await response2.json();
-        const data = Object.assign({}, ...fetched.map((x: any) => ({ [x['id']]: x })))
-        // console.log(data);
-        obj.value = data;
-        // dict.value = data;
-        const dataCats = {} as keyable;
-        for (const item in data) {
-            JSON.parse(data[item]?.names)?.forEach((x: any) => dataCats[x] = data[item].parent);
-        }
-        cats.value = dataCats;
+        const fetched = await response.json();
+        const hash1 = {} as keyable;
+        const hash2 = {} as keyable;
+        const hash3 = {} as keyable;
+        fetched.forEach((x: any) => {
+            JSON.parse(x.names)?.forEach((y: any) =>
+                (hash1[y] = x.title) && (hash3[y] = x.parent)
+            );
+            hash2[x['id']] = x;
+        });
+        dict.value = hash1;
+        obj.value = hash2;
+        cats.value = hash3;
         isLoaded.value = true;
     } else {
         console.log("fetching error");
