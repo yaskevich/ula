@@ -19,8 +19,12 @@
     </n-modal>
     <!-- <h2>Analysis of the street names of Poland</h2> -->
     <div v-if="isLoaded">
+        <div class="p-4">
+            <n-switch v-model:value="editMode" />
+        </div>
         <n-space vertical v-for="(val, index) in (store.freq as any).streets.slice(0, limit)">
-            <n-space justify="space-between" style="max-width:300px">
+            <n-space justify="space-between" style="max-width:300px"
+                v-if="(editMode && !cats?.[val.name]) || !editMode">
                 <n-button :text="route.fullPath !== `/country/${index + 1}`"
                     @click="router.push(`/country/${index + 1}`)">{{
                         index + 1
@@ -64,7 +68,7 @@ const router = useRouter();
 const route = useRoute();
 const limit = Number(route.params.limit) || 500;
 // console.log(route.params.limit);
-
+const editMode = ref(false);
 const stem = ref<IInfo>({ title: '', emoji: '', names: [], leaf: 1, en: '', id: null, parent: null });
 
 const saveStem = async () => {
