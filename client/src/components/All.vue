@@ -22,24 +22,21 @@
         <div class="p-4">
             <n-switch v-model:value="editMode" />
         </div>
-        <n-space vertical v-for="(val, index) in (store.freq as any).streets.slice(0, limit)">
-            <n-space justify="space-between" style="max-width:300px"
-                v-if="(editMode && !cats?.[val.name]) || !editMode">
-                <n-button :text="route.fullPath !== `/country/${index + 1}`"
-                    @click="router.push(`/country/${index + 1}`)">{{
-                        index + 1
+        <n-space vertical v-for="(val, index) in datum">
+            <n-space justify="space-between" style="max-width:300px" v-if="(editMode && !val.parent?.id) || !editMode">
+                <n-button :text="route.fullPath !== `/country/${Number(index) + 1}`"
+                    @click="router.push(`/country/${Number(index) + 1}`)">{{
+                        Number(index) + 1
                     }}. {{ val.name }}</n-button>
-                <!-- <InputText v-if="showEditor === index" type="text" v-model="value" size="small" /> -->
                 <div>
-                    <n-tag :type="obj[cats[val.name]]?.title === '<unsorted>' ? 'error' : 'warning'" size="small"
-                        v-if="val.name in cats">
-                        {{ obj[cats[val.name]]?.title || '<error>' }}
+                    <n-tag :type="val.parent?.title === '<unsorted>' ? 'error' : 'warning'" size="small"
+                        v-if="val?.parent?.title">
+                        {{ val.parent.title || '<error>' }}
                     </n-tag>
-                    <n-tag type="info" size="small" v-if="val.name in dict">
-                        {{ dict[val.name] }}
+                    <n-tag type="info" size="small" v-if="val.cat?.id">
+                        {{ val.cat?.title }}
                     </n-tag>
-
-                    <n-button v-else size="tiny" @click="openModal(val.name, obj[cats[val.name]])">
+                    <n-button v-else size="tiny" @click="openModal(val.name, val.cat)">
                         Annotate
                     </n-button>
                 </div>
@@ -56,20 +53,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onBeforeMount } from 'vue';
+import { ref, onBeforeMount, reactive } from 'vue';
 import store from '../store';
 import { useRouter, useRoute } from 'vue-router';
 
 const showModal = ref(false);
-const dict = ref();
-const cats = ref({} as keyable);
-const obj = ref();
 const router = useRouter();
 const route = useRoute();
 const limit = Number(route.params.limit) || 500;
 // console.log(route.params.limit);
-const editMode = ref(false);
+const editMode = ref(true);
 const stem = ref<IInfo>({ title: '', emoji: '', names: [], leaf: 1, en: '', id: null, parent: null });
+const datum = reactive({} as keyable);
 
 const saveStem = async () => {
     showModal.value = false;
@@ -83,7 +78,12 @@ const saveStem = async () => {
     });
     if (response.status === 200) {
         const data = await response.json();
-        console.log("change", data);
+        if (data.changes === 1) {
+            console.log(data.lastID);
+            console.log(stem.value);
+        } else {
+            console.error("topic saving error!");
+        }
     }
 };
 
@@ -120,18 +120,14 @@ onBeforeMount(async () => {
     const response = await fetch('/api/onto');
     if (response.status === 200) {
         const fetched = await response.json();
-        const hash1 = {} as keyable;
-        const hash2 = {} as keyable;
-        const hash3 = {} as keyable;
-        fetched.forEach((x: any) => {
-            JSON.parse(x.names)?.forEach((y: any) =>
-                (hash1[y] = x.title) && (hash3[y] = x.parent)
-            );
-            hash2[x['id']] = x;
-        });
-        dict.value = hash1;
-        obj.value = hash2;
-        cats.value = hash3;
+        fetched.forEach((x: any) => x.names = JSON.parse(x.names));
+
+        for (const [key, val] of Object.entries<any>((store.freq as any).streets.slice(0, limit))) {
+            const cat = fetched?.find((x: any) => x.names?.includes(val.name));
+            const parent = fetched?.find((x: any) => x.id === cat?.parent);
+            datum[String(key)] = { ...val, parent, cat };
+        }
+
         isLoaded.value = true;
     } else {
         console.log("fetching error");
