@@ -23,7 +23,7 @@
             <n-switch v-model:value="editMode" />
         </div>
         <n-space vertical v-for="(val, index) in datum">
-            <n-space justify="space-between" style="max-width:300px" v-if="(editMode && !val.parent?.id) || !editMode">
+            <n-space justify="space-between" style="max-width:380px" v-if="(editMode && !val.parent?.id) || !editMode">
                 <n-button :text="route.fullPath !== `/country/${Number(index) + 1}`"
                     @click="router.push(`/country/${Number(index) + 1}`)">{{
                         Number(index) + 1
@@ -36,7 +36,7 @@
                     <n-tag type="info" size="small" v-if="val.cat?.id">
                         {{ val.cat?.title }}
                     </n-tag>
-                    <n-button v-else size="tiny" @click="openModal(val.name, val.cat)">
+                    <n-button v-else size="tiny" @click="openModal(Number(index), val.name, val.cat)">
                         Annotate
                     </n-button>
                 </div>
@@ -63,7 +63,7 @@ const route = useRoute();
 const limit = Number(route.params.limit) || 500;
 // console.log(route.params.limit);
 const editMode = ref(true);
-const stem = ref<IInfo>({ title: '', emoji: '', names: [], leaf: 1, en: '', id: null, parent: null });
+const stem = ref<IInfo>({ title: '', emoji: '', names: [], leaf: 1, en: '', id: null, parent: null, num: null });
 const datum = reactive({} as keyable);
 
 const saveStem = async () => {
@@ -79,20 +79,25 @@ const saveStem = async () => {
     if (response.status === 200) {
         const data = await response.json();
         if (data.changes === 1) {
-            console.log(data.lastID);
-            console.log(stem.value);
+            const response = await fetch('/api/default');
+            if (response.status === 200 && stem?.value?.num) {
+                const parent = await response.json();
+                stem.value.id = data.lastID;
+                datum[stem.value.num]["cat"] = stem.value;
+                datum[stem.value.num]["parent"] = parent;
+            }
         } else {
             console.error("topic saving error!");
         }
     }
 };
 
-const openModal = (name: string, item: IInfo) => {
+const openModal = (id: number, name: string, item: IInfo) => {
     // console.log(item);
     showModal.value = true;
 
     if (item === undefined) {
-        stem.value = { "id": null, "emoji": "", "title": "", "en": "", "names": [name], "parent": null, "leaf": 1 }
+        stem.value = { "id": null, "emoji": "", "title": "", "en": "", "names": [name], "parent": null, "leaf": 1, "num": id }
     } else {
         stem.value = item;
     }
