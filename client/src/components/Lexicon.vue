@@ -29,12 +29,34 @@ const showModal = ref(false);
 const nodesList = ref();
 const nodeRefs = ref();
 
-const onSelectEmoji = (emoji: any) => {
-    console.log(emoji.i);
+const selected = ref<TreeOption>();
+
+const onSelectEmoji = async (emoji: any) => {
+    if (selected.value) {
+        selected.value.emoji = emoji.i;
+        console.log(selected.value);
+        console.log(emoji.i);
+        const response = await fetch('/api/topic', {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json', // this needs to be defined
+            },
+            body: JSON.stringify(selected.value),
+        });
+        if (response.status === 200) {
+            const data = await response.json();
+            console.log("move", data);
+        }
+    }
+};
+
+const openModal = (option: TreeOption) => {
+    showModal.value = true;
+    selected.value = option;
 };
 
 const renderPrefix = ({ option }: { option: TreeOption }) => {
-    return h(NButton, { text: true, type: 'primary', onClick: () => { showModal.value = true; } }, { default: () => option.emoji });
+    return h(NButton, { text: true, type: 'primary', onClick: () => { openModal(option) } }, { default: () => option.emoji });
 };
 
 const handleDrop = async ({ node, dragNode, dropPosition, event }: TreeDropInfo) => {
