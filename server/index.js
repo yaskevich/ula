@@ -15,7 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const __package = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
 
-const dictPath = path.join(__dirname, '..', 'data', 'dict.json')
+// const dictPath = path.join(__dirname, '..', 'data', 'dict.json')
 const ontoPath = path.join(__dirname, '..', 'data', 'onto.json')
 
 const db = await open({ filename: path.join(__dirname, '..', 'data', 'data.db'), driver: sqlite3.cached.Database });
@@ -104,18 +104,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // app.use(history());
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-app.get('/api/dict', async (req, res) => {
-  const data = fs.readFileSync(dictPath, "utf8");
-  // console.log(data);
-  res.json(JSON.parse(data));
-});
-
 app.post('/api/topic', async (req, res) => {
-  console.log(req.body);
-  // return;
-
+  // console.log(req.body);
   const result = req.body.id ?
-
     await db.run(
       'UPDATE ontology SET emoji = ? , title = ?, en = ?, names = ?, parent = ? WHERE id = ?',
       req.body.emoji,
@@ -127,13 +118,18 @@ app.post('/api/topic', async (req, res) => {
     ) : await db.run(
       'INSERT INTO ontology (emoji, title, en, names, parent, leaf) VALUES (?, ?, ?, ?, ?, ?)',
       req.body.emoji || getEmoji(), req.body.title, req.body.title, JSON.stringify(req.body.names), req.body.parent || 65, true
-    );;
+    );
   res.json(result);
 });
 
 app.get('/api/onto', async (req, res) => {
   const result = await db.all('SELECT * FROM ontology ORDER BY title');
   res.json(result);
+});
+
+app.get('/api/default', async (req, res) => {
+  const result = await db.all("SELECT * FROM ontology WHERE title = '<unsorted>'");
+  res.json(result?.shift());
 });
 
 app.listen(port);
