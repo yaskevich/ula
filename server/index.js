@@ -132,5 +132,10 @@ app.get('/api/default', async (req, res) => {
   res.json(result?.shift());
 });
 
+app.get('/api/groups', async (req, res) => {
+  const result = await db.all("SELECT woj, nazwa_1, count(nazwa_1) FROM list GROUP BY nazwa_1, woj ORDER BY count(nazwa_1) DESC");
+  res.json(result);
+});
+
 app.listen(port);
 console.log(`Backend is at port ${port}`);
