@@ -133,8 +133,17 @@ app.get('/api/default', async (req, res) => {
 });
 
 app.get('/api/groups', async (req, res) => {
-  const result = await db.all("SELECT woj, nazwa_1, count(nazwa_1) FROM list GROUP BY nazwa_1, woj ORDER BY count(nazwa_1) DESC");
-  res.json(result);
+  const result = await db.all("SELECT woj as region, nazwa_1 as title, count(nazwa_1) as qty FROM list WHERE title IS NOT NULL GROUP BY nazwa_1, woj ORDER BY count(nazwa_1) DESC");
+  const hash = {};
+  for (const item of result) {
+    const datum = { title: item.title, qty: item.qty };
+    if (hash?.[item.region]) {
+      hash[item.region].push(datum);
+    } else {
+      hash[item.region] = [datum];
+    }
+  }
+  res.json(hash);
 });
 
 app.listen(port);
