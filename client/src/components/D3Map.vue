@@ -47,7 +47,7 @@ import { useRoute } from 'vue-router';
 import { onBeforeRouteUpdate } from 'vue-router';
 
 const vuerouter = useRoute();
-// console.log(vuerouter.name);
+console.log(vuerouter.name);
 
 const id = ref(Number(toRaw(vuerouter?.params?.id)) || 1);
 // console.log("requested", id.value);
@@ -66,6 +66,8 @@ const svgRef = ref(null);
 const mapRef = ref<HTMLElement | null>(null);
 const streetObject = ref<IStreetInfo>();
 const myInterval = ref();
+
+const groups = ref();
 
 const getCounts = (hash: keyable, num: number) => hash?.[num] || [0, 0];
 const renderPercent = (x: number) => String(parseFloat(Number(x).toFixed(4)));
@@ -187,8 +189,27 @@ const chartClicked = async () => {
   }
 };
 
-const loadStreet = () => {
+
+const getGroups = async () => {
+  const response = await fetch('/api/groups');
+  if (response.status === 200) {
+    const data = await response.json();
+    groups.value = data;
+    // console.log(data);
+  } else {
+    console.log("fetching error");
+  }
+};
+
+
+const loadStreet = async () => {
   id.value = id.value || 0;
+
+  if (vuerouter.name === 'Regions') {
+    // console.log("load regions");
+    await getGroups();
+  }
+
   let svg = d3.select(svgRef.value);
 
   svg.select(".carta").remove();
@@ -249,6 +270,20 @@ const loadStreet = () => {
         unit.value = num.value = '';
       });
 
+
+    const getRegionCaption = (d: any) => {
+      // console.log(d);
+      const regionData = groups.value[String(d.properties.terytId).padStart(2, '0')];
+      if (regionData?.length) {
+        const regionInfo = regionData?.[0];
+        return regionInfo?.title;
+        // console.log(groups.value);
+      } else {
+        console.log('error');
+      }
+      // 
+      return d.properties.nazwa;
+    };
     carta.append("g").attr('class', 'captions')
       .selectAll("text")
       .data(store.geofeatures)
@@ -258,7 +293,7 @@ const loadStreet = () => {
       .attr("x", (d: any) => path.centroid(d)[0])
       .attr("y", (d: any) => path.centroid(d)[1] + 4)
       .attr("text-anchor", "middle")
-      .text((d: any) => d.properties.nazwa);
+      .text((d: any) => getRegionCaption(d));
 
     carta.append("g").attr('class', 'captions')
       .selectAll("text")
@@ -269,7 +304,7 @@ const loadStreet = () => {
       .attr("x", (d: any) => path.centroid(d)[0])
       .attr("y", (d: any) => path.centroid(d)[1] + 4)
       .attr("text-anchor", "middle")
-      .text((d: any) => d.properties.nazwa);
+      .text((d: any) => getRegionCaption(d));
 
     showHideCaptions(true);
 
@@ -325,7 +360,7 @@ const animate = () => {
 
 onBeforeMount(async () => await getFontBase64());
 
-onMounted(() => loadStreet());
+onMounted(async () => await loadStreet());
 
 onBeforeRouteUpdate(async (to, from) => {
   // console.log(to.params);
