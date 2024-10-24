@@ -2,8 +2,8 @@
   <div style="min-width:500px">
     <!-- <h3>{{ streetObject?.name }} [{{ streetObject?.freq }}] 🏅{{ curIndex + 1 }}</h3> -->
     <!-- <h5> <i class="pi pi-info-circle"></i> {{ unit }} {{ num }} </h5> -->
-    <n-checkbox @update:checked="showHideCaptions" :default-checked="true" />
-
+    <n-checkbox @update:checked="showHideCaptions" :default-checked="true" v-if="vuerouter.name !== 'Regions'" />
+    <!-- <n-button @click="console.log(props.place)">check</n-button> -->
     <div ref="mapRef" id="map">
       <svg ref="svgRef" :width="svgWidth" :height="svgHeight" style="font-family: 'Open Sans'">
         <text x="0" y="15" class="title">{{ unit }}</text>
@@ -38,13 +38,17 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeMount, ref, toRaw } from 'vue';
+import { onMounted, onBeforeMount, ref, toRaw, watch } from 'vue';
 import router from '../router';
 import store from '../store';
 import * as d3 from 'd3';
 import { ArrowRight, ArrowLeft, Download } from '@vicons/carbon';
 import { useRoute } from 'vue-router';
 import { onBeforeRouteUpdate } from 'vue-router';
+
+const props = defineProps({
+  place: { type: Number },
+});
 
 const vuerouter = useRoute();
 console.log(vuerouter.name);
@@ -230,8 +234,9 @@ const loadStreet = async () => {
 
   const path = d3.geoPath().projection(projection);
 
-  // vuerouter.name === 'Top'
-  streetObject.value = (store.freq as keyable).streets?.[id.value - 1] as IStreetInfo;
+  if (vuerouter.name === 'Top') {
+    streetObject.value = (store.freq as keyable).streets?.[id.value - 1] as IStreetInfo;
+  }
   const obj = vuerouter.name === 'Top' ? streetObject.value : store.freq;
   const dataset = (obj as keyable).regions;
   const values = Object.values(dataset).map((x: any) => x[1]);
@@ -275,7 +280,8 @@ const loadStreet = async () => {
       // console.log(d);
       const regionData = groups.value[String(d.properties.terytId).padStart(2, '0')];
       if (regionData?.length) {
-        const regionInfo = regionData?.[0];
+        const idx = props.place || 0;
+        const regionInfo = regionData?.[idx];
         return regionInfo?.title;
         // console.log(groups.value);
       } else {
@@ -345,6 +351,11 @@ const loadPrevious = () => {
     router.push(`/country/${id.value}`)
   }
 };
+
+watch(() => props.place, async (selection, prevSelection) => {
+  // console.log(props.place, selection);
+  await loadStreet();
+});
 
 const animate = () => {
   if (myInterval.value) {
