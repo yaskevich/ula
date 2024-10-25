@@ -2,7 +2,7 @@
     <!-- <h2>Analysis of the street names of Poland</h2> -->
     <n-space>
         <div>
-            <D3Map />
+            <D3Map :place="id" />
         </div>
         <div>
             <n-input-number v-model:value="id" clearable :min="1" />
@@ -23,7 +23,7 @@ import D3Map from './D3Map.vue';
 import { ref, onBeforeMount } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 
-const router = useRouter();
+// const router = useRouter();
 const route = useRoute();
 const id = ref(Number(route.params.id));
 </script>
