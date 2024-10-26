@@ -146,5 +146,13 @@ app.get('/api/groups', async (req, res) => {
   res.json(hash);
 });
 
+app.get('/api/regions', async (req, res) => {
+  const allCount = await db.get("SELECT count(*) as qty FROM list where nazwa_1 <> '' ");
+  // console.log(allCount);
+  const result = await db.all("SELECT woj, count(*) as qty, round(100.0 * count(*)/?) as pc FROM list where nazwa_1 <> '' group by woj order by qty DESC", allCount.qty);
+  res.json(result);
+});
+
+
 app.listen(port);
 console.log(`Backend is at port ${port}`);
