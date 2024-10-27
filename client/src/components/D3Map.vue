@@ -70,8 +70,8 @@ const svgRef = ref(null);
 const mapRef = ref<HTMLElement | null>(null);
 const streetObject = ref<IStreetInfo>();
 const myInterval = ref();
-
 const groups = ref();
+const regions = ref();
 
 const getCounts = (hash: keyable, num: number) => hash?.[num] || [0, 0];
 const renderPercent = (x: number) => String(parseFloat(Number(x).toFixed(4)));
@@ -205,6 +205,17 @@ const getGroups = async () => {
   }
 };
 
+const getRegions = async () => {
+  const response = await fetch('/api/regions');
+  if (response.status === 200) {
+    const data = await response.json();
+    regions.value = data;
+    // console.log(data);
+  } else {
+    console.log("fetching error");
+  }
+};
+
 
 const loadStreet = async () => {
   id.value = id.value || 0;
@@ -237,9 +248,9 @@ const loadStreet = async () => {
   if (vuerouter.name === 'Top') {
     streetObject.value = (store.freq as keyable).streets?.[id.value - 1] as IStreetInfo;
   }
-  const obj = vuerouter.name === 'Top' ? streetObject.value : store.freq;
-  const dataset = (obj as keyable).regions;
-  const values = Object.values(dataset).map((x: any) => x[1]);
+  // const obj = vuerouter.name === 'Top' ? streetObject.value : store.freq;
+  // const dataset = (obj as keyable).regions;
+  const values = Object.values(regions.value).map((x: any) => x[1]);
   const ext = d3.extent(values) as Array<number>;
   const last = ext[1];
   if (ext[0] !== undefined && ext[1] !== undefined) {
@@ -262,12 +273,12 @@ const loadStreet = async () => {
       .style("stroke", 'black')
       .classed('district', true)
       .attr('fill', (d: any) => {
-        return colorize(getCounts(dataset, d.properties.terytId)[1]);
+        return colorize(getCounts(regions.value, d.properties.terytId)[1]);
       })
       .attr("d", path as any)
       .on("mouseover", (e: any, d: any) => {
         unit.value = d.properties.nazwa + ' w-wo';
-        const counts = getCounts(dataset, d.properties.terytId);
+        const counts = getCounts(regions.value, d.properties.terytId);
         // console.log(counts);
         num.value = `${counts[0]} ≈ ${renderPercent(counts[1])}%`;
       })
@@ -278,6 +289,9 @@ const loadStreet = async () => {
 
     const getRegionCaption = (d: any) => {
       // console.log(d);
+      if (vuerouter.name !== 'Regions') {
+        return d.properties.nazwa;
+      }
       const regionData = groups.value[String(d.properties.terytId).padStart(2, '0')];
       if (regionData?.length) {
         const idx = props.place || 0;
@@ -371,7 +385,10 @@ const animate = () => {
 
 onBeforeMount(async () => await getFontBase64());
 
-onMounted(async () => await loadStreet());
+onMounted(async () => {
+  await getRegions();
+  await loadStreet();
+});
 
 onBeforeRouteUpdate(async (to, from) => {
   // console.log(to.params);
