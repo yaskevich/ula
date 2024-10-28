@@ -149,8 +149,9 @@ app.get('/api/groups', async (req, res) => {
 app.get('/api/regions', async (req, res) => {
   const allCount = await db.get("SELECT count(*) as qty FROM list where nazwa_1 <> '' ");
   // console.log(allCount);
-  const result = await db.all("SELECT woj, count(*) as qty, round(100.0 * count(*)/?) as pc FROM list where nazwa_1 <> '' group by woj order by qty DESC", allCount.qty);
-  res.json(result);
+  const result = await db.all("SELECT woj as woj, count(*) as qty, round(100.0 * count(*)/?) as pc FROM list where nazwa_1 <> '' group by woj order by qty DESC", allCount.qty);
+  res.json(Object.fromEntries(result.map(item => [item.woj, [item.qty, item.pc]])));
+
 });
 
 
