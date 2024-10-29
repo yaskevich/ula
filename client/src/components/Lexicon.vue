@@ -8,8 +8,10 @@
             block-line :override-default-node-click-behavior="override" @drop="handleDrop"></n-tree>
     </div>
     <n-modal :show="showModal">
-        <div>
-            <n-button @click="showModal = false">Close</n-button>
+        <div style="background-color: white">
+            <n-button @click="showModal = false" type="info">Close</n-button>
+            <n-input v-model:value="selected.title" v-if="selected?.title"></n-input>
+            <!-- {{ selected }} -->
             <EmojiPicker :native="true" @select="onSelectEmoji" disable-skin-tones />
         </div>
     </n-modal>
