@@ -73,7 +73,7 @@ const myInterval = ref();
 const groups = ref();
 const regions = ref();
 
-const getCounts = (hash: keyable, num: number) => hash?.[num] || [0, 0];
+const getCounts = (hash: keyable, num: number| string) => hash?.[num] || [0, 0];
 const renderPercent = (x: number) => String(parseFloat(Number(x).toFixed(4)));
 
 const showHideCaptions = (checked: boolean) => {
@@ -247,13 +247,19 @@ const loadStreet = async () => {
 
   if (vuerouter.name === 'Top') {
     streetObject.value = (store.freq as keyable).streets?.[id.value - 1] as IStreetInfo;
+    console.log(streetObject.value);
+    
   }
   // const obj = vuerouter.name === 'Top' ? streetObject.value : store.freq;
   // const dataset = (obj as keyable).regions;
-  const values = Object.values(regions.value).map((x: any) => x[1]);
+  const values = Object.values(vuerouter.name === 'Top' ? streetObject?.value?.regions: regions.value).map((x: any) => x[1]);
   const ext = d3.extent(values) as Array<number>;
+    console.log(ext);
+    
   const last = ext[1];
+  
   if (ext[0] !== undefined && ext[1] !== undefined) {
+    console.log("redraw");
     const leftLim = Math.ceil(last);
     const colorize = d3.scaleLinear<string>().domain([0, last]).range(['#f1eef6', '#0570b0']);
 
@@ -265,15 +271,26 @@ const loadStreet = async () => {
       // .   attr('x', '550px')
       // .attr("y", '150px')
       // .attr("transform", `translate(150,0)`)
-
-
       .selectAll("path")
       .data(store.geofeatures)
       .join("path")
       .style("stroke", 'black')
       .classed('district', true)
       .attr('fill', (d: any) => {
-        return colorize(getCounts(regions.value, d.properties.terytId)[1]);
+        // console.log(d);
+        const numid = String(d.properties.terytId).padStart(2, '0');
+        // console.log(String(d.properties.terytId).padStart(2, '0'), d.properties.terytId);
+
+        // String(d.properties.terytId).padStart(2, '0')
+        // console.log(getCounts(regions.value, Number());
+        
+        // console.log(regions.value, numid);
+        // console.log(getCounts(regions.value, numid)[1]);
+        
+        // console.log(colorize(getCounts(regions.value, d.properties.terytId)[1]));
+        // console.log(colorize(getCounts(regions.value, numid)[1]));
+        const obj = vuerouter.name === 'Top' ? streetObject?.value?.regions : regions.value;
+        return colorize(getCounts(obj, numid)[1]);
       })
       .attr("d", path as any)
       .on("mouseover", (e: any, d: any) => {
@@ -367,7 +384,7 @@ const loadPrevious = () => {
 };
 
 watch(() => props.place, async (selection, prevSelection) => {
-  // console.log(props.place, selection);
+  console.log(props.place, selection);
   await loadStreet();
 });
 
@@ -377,7 +394,7 @@ const animate = () => {
     myInterval.value = null;
   } else {
     myInterval.value = setInterval(function () {
-      // console.log("next");
+      console.log("next");
       loadNext();
     }, 2000);
   }
@@ -391,7 +408,7 @@ onMounted(async () => {
 });
 
 onBeforeRouteUpdate(async (to, from) => {
-  // console.log(to.params);
+  console.log(to.params);
   id.value = Number(to.params.id);
   loadStreet();
 })
