@@ -254,12 +254,9 @@ const loadStreet = async () => {
   // const dataset = (obj as keyable).regions;
   const values = Object.values(vuerouter.name === 'Top' ? streetObject?.value?.regions: regions.value).map((x: any) => x[1]);
   const ext = d3.extent(values) as Array<number>;
-    console.log(ext);
-    
   const last = ext[1];
   
   if (ext[0] !== undefined && ext[1] !== undefined) {
-    console.log("redraw");
     const leftLim = Math.ceil(last);
     const colorize = d3.scaleLinear<string>().domain([0, last]).range(['#f1eef6', '#0570b0']);
 
@@ -278,7 +275,7 @@ const loadStreet = async () => {
       .classed('district', true)
       .attr('fill', (d: any) => {
         // console.log(d);
-        const numid = String(d.properties.terytId).padStart(2, '0');
+        const numid = String(d.properties.terytId); //.padStart(2, '0');
         // console.log(String(d.properties.terytId).padStart(2, '0'), d.properties.terytId);
 
         // String(d.properties.terytId).padStart(2, '0')
@@ -295,7 +292,9 @@ const loadStreet = async () => {
       .attr("d", path as any)
       .on("mouseover", (e: any, d: any) => {
         unit.value = d.properties.nazwa + ' w-wo';
-        const counts = getCounts(regions.value, d.properties.terytId);
+        const obj = vuerouter.name === 'Top' ? streetObject?.value?.regions : regions.value;
+
+        const counts = getCounts(obj, d.properties.terytId);
         // console.log(counts);
         num.value = `${counts[0]} ≈ ${renderPercent(counts[1])}%`;
       })
@@ -384,7 +383,7 @@ const loadPrevious = () => {
 };
 
 watch(() => props.place, async (selection, prevSelection) => {
-  console.log(props.place, selection);
+  // console.log(props.place, selection);
   await loadStreet();
 });
 
