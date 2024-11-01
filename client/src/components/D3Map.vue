@@ -51,11 +51,9 @@ const props = defineProps({
 });
 
 const vuerouter = useRoute();
-console.log(vuerouter.name);
-
-const id = ref(Number(toRaw(vuerouter?.params?.id)) || 1);
+// console.log(vuerouter.name);
+const id = ref(Number(toRaw(vuerouter?.params?.id)));
 // console.log("requested", id.value);
-
 const svgWidth = ref(0);
 const svgHeight = ref(0);
 
@@ -73,7 +71,7 @@ const myInterval = ref();
 const groups = ref();
 const regions = ref();
 
-const getCounts = (hash: keyable, num: number| string) => hash?.[num] || [0, 0];
+const getCounts = (hash: keyable, num: number | string) => hash?.[num] || [0, 0];
 const renderPercent = (x: number) => String(parseFloat(Number(x).toFixed(4)));
 
 const showHideCaptions = (checked: boolean) => {
@@ -218,7 +216,7 @@ const getRegions = async () => {
 
 
 const loadStreet = async () => {
-  id.value = id.value || 0;
+  id.value = id.value || 1;
 
   if (vuerouter.name === 'Regions') {
     // console.log("load regions");
@@ -248,14 +246,14 @@ const loadStreet = async () => {
   if (vuerouter.name === 'Top') {
     streetObject.value = (store.freq as keyable).streets?.[id.value - 1] as IStreetInfo;
     console.log(streetObject.value);
-    
+
   }
   // const obj = vuerouter.name === 'Top' ? streetObject.value : store.freq;
   // const dataset = (obj as keyable).regions;
-  const values = Object.values(vuerouter.name === 'Top' ? streetObject?.value?.regions: regions.value).map((x: any) => x[1]);
+  const values = Object.values(vuerouter.name === 'Top' ? streetObject?.value?.regions : regions.value).map((x: any) => x[1]);
   const ext = d3.extent(values) as Array<number>;
   const last = ext[1];
-  
+
   if (ext[0] !== undefined && ext[1] !== undefined) {
     const leftLim = Math.ceil(last);
     const colorize = d3.scaleLinear<string>().domain([0, last]).range(['#f1eef6', '#0570b0']);
@@ -280,10 +278,10 @@ const loadStreet = async () => {
 
         // String(d.properties.terytId).padStart(2, '0')
         // console.log(getCounts(regions.value, Number());
-        
+
         // console.log(regions.value, numid);
         // console.log(getCounts(regions.value, numid)[1]);
-        
+
         // console.log(colorize(getCounts(regions.value, d.properties.terytId)[1]));
         // console.log(colorize(getCounts(regions.value, numid)[1]));
         const obj = vuerouter.name === 'Top' ? streetObject?.value?.regions : regions.value;
@@ -402,6 +400,12 @@ const animate = () => {
 onBeforeMount(async () => await getFontBase64());
 
 onMounted(async () => {
+  if (!id.value && vuerouter.name === 'Top') {
+    console.log("update URL");
+    id.value = 1;
+    router.push(`/country/${id.value}`)
+  }
+
   await getRegions();
   await loadStreet();
 });
