@@ -191,6 +191,16 @@ const chartClicked = async () => {
   }
 };
 
+const getStreet = async (name: string) => {
+  const response = await fetch('/api/street?' + new URLSearchParams({ name }).toString());
+  if (response.status === 200) {
+    const data = await response.json();
+    return data;
+  } else {
+    console.log("fetching error");
+  }
+};
+
 
 const getGroups = async () => {
   const response = await fetch('/api/groups');
@@ -221,6 +231,9 @@ const loadStreet = async () => {
   if (vuerouter.name === 'Regions') {
     // console.log("load regions");
     await getGroups();
+  } else if (vuerouter.name === 'Top') {
+    const streetUnit = store.freq[id.value - 1];
+    streetObject.value = await getStreet(String(streetUnit[0]));
   }
 
   let svg = d3.select(svgRef.value);
@@ -243,11 +256,6 @@ const loadStreet = async () => {
 
   const path = d3.geoPath().projection(projection);
 
-  if (vuerouter.name === 'Top') {
-    streetObject.value = (store.freq as keyable).streets?.[id.value - 1] as IStreetInfo;
-    console.log(streetObject.value);
-
-  }
   // const obj = vuerouter.name === 'Top' ? streetObject.value : store.freq;
   // const dataset = (obj as keyable).regions;
   const values = Object.values(vuerouter.name === 'Top' ? streetObject?.value?.regions : regions.value).map((x: any) => x[1]);
@@ -273,7 +281,7 @@ const loadStreet = async () => {
       .classed('district', true)
       .attr('fill', (d: any) => {
         // console.log(d);
-        const numid = String(d.properties.terytId); //.padStart(2, '0');
+        const numid = String(d.properties.terytId).padStart(2, '0');
         // console.log(String(d.properties.terytId).padStart(2, '0'), d.properties.terytId);
 
         // String(d.properties.terytId).padStart(2, '0')
@@ -411,7 +419,7 @@ onMounted(async () => {
 });
 
 onBeforeRouteUpdate(async (to, from) => {
-  console.log(to.params);
+  // console.log(to.params);
   id.value = Number(to.params.id);
   loadStreet();
 })
