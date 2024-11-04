@@ -3,11 +3,11 @@
   <n-space>
     <D3Map />
     <div>
-      <div v-for="(val, index) in store.freq.streets.slice(0, 500) ">
+      <div v-for="(val, index) in (store.freq as any).slice(0, 500) ">
         <n-button text :type="route.fullPath !== `/country/${index + 1}` ? 'default' : 'info'"
           @click="router.push(`/country/${index + 1}`)">{{
-        index + 1
-      }}. {{ val.name }}</n-button>
+            index + 1
+          }}. {{ val[0] }}</n-button>
       </div>
     </div>
   </n-space>
