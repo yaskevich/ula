@@ -22,6 +22,7 @@
         <div class="p-4">
             <n-switch v-model:value="editMode" />
         </div>
+
         <n-space vertical v-for="(val, index) in datum">
             <n-space justify="space-between" style="max-width:380px" v-if="(editMode && !val.parent?.id) || !editMode">
                 <n-button :text="route.fullPath !== `/country/${Number(index) + 1}`"
@@ -127,10 +128,12 @@ onBeforeMount(async () => {
         const fetched = await response.json();
         fetched.forEach((x: any) => x.names = JSON.parse(x.names));
 
-        for (const [key, val] of Object.entries<any>((store.freq as any).streets.slice(0, limit))) {
-            const cat = fetched?.find((x: any) => x.names?.includes(val.name));
+        for (const [key, val] of Object.entries<any>((store.freq as any).slice(0, limit))) {
+            const name = val[0];
+            const qty = val[1];
+            const cat = fetched?.find((x: any) => x.names?.includes(name));
             const parent = fetched?.find((x: any) => x.id === cat?.parent);
-            datum[String(key)] = { ...val, parent, cat };
+            datum[String(key)] = { name, qty, parent, cat, key };
         }
 
         isLoaded.value = true;
