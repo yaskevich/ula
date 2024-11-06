@@ -281,6 +281,9 @@ const loadStreet = async () => {
       .classed('district', true)
       .attr('fill', (d: any) => {
         // console.log(d);
+        if (vuerouter.name === 'Regions') {
+          return 'aliceblue';
+        }
         const numid = String(d.properties.terytId).padStart(2, '0');
         // console.log(String(d.properties.terytId).padStart(2, '0'), d.properties.terytId);
 
@@ -350,29 +353,33 @@ const loadStreet = async () => {
 
     showHideCaptions(true);
 
-    const legend = carta.append('g');
+    if (vuerouter.name !== 'Regions') {
 
-    const ticksNumber = 10;
 
-    legend
-      .selectAll('.legend')
-      .data(d3.ticks(0, Math.ceil(last), ticksNumber))
-      .enter().append('rect')
-      .attr('x', (d: any) => legendOffsetX + d * legendCellWidth + 'px')
-      .attr("y", legendOffsetY)
-      .attr("width", legendCellWidth)
-      .attr("height", legendHeight)
-      .attr('fill', (d: any) => {
-        // console.log(d, colorize(d));
-        return colorize(d)
-      });
+      const legend = carta.append('g');
 
-    const sc = d3.scaleLinear().domain([0, last]).range([0, last * legendCellWidth]);
+      const ticksNumber = 10;
 
-    legend
-      .append("g")
-      .attr("transform", `translate(${legendOffsetX},${legendOffsetY + legendHeight})`)
-      .call(d3.axisBottom(sc).ticks(ticksNumber).tickFormat((d: any, i: any) => renderPercent(d as number))); // Math.round(last / 5)
+      legend
+        .selectAll('.legend')
+        .data(d3.ticks(0, Math.ceil(last), ticksNumber))
+        .enter().append('rect')
+        .attr('x', (d: any) => legendOffsetX + d * legendCellWidth + 'px')
+        .attr("y", legendOffsetY)
+        .attr("width", legendCellWidth)
+        .attr("height", legendHeight)
+        .attr('fill', (d: any) => {
+          // console.log(d, colorize(d));
+          return colorize(d)
+        });
+
+      const sc = d3.scaleLinear().domain([0, last]).range([0, last * legendCellWidth]);
+
+      legend
+        .append("g")
+        .attr("transform", `translate(${legendOffsetX},${legendOffsetY + legendHeight})`)
+        .call(d3.axisBottom(sc).ticks(ticksNumber).tickFormat((d: any, i: any) => renderPercent(d as number))); // Math.round(last / 5)
+    }
   }
 };
 
