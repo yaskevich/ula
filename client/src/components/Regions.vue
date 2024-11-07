@@ -25,5 +25,5 @@ import { useRouter, useRoute } from 'vue-router';
 
 // const router = useRouter();
 const route = useRoute();
-const id = ref(Number(route.params.id));
+const id = ref(Number(route.params.id) || 1);
 </script>
