@@ -195,6 +195,7 @@ const getStreet = async (name: string) => {
   const response = await fetch('/api/street?' + new URLSearchParams({ name }).toString());
   if (response.status === 200) {
     const data = await response.json();
+    // console.log(data);
     return data;
   } else {
     console.log("fetching error");
@@ -301,11 +302,19 @@ const loadStreet = async () => {
       .attr("d", path as any)
       .on("mouseover", (e: any, d: any) => {
         unit.value = d.properties.nazwa + ' w-wo';
-        const obj = vuerouter.name === 'Top' ? streetObject?.value?.regions : regions.value;
 
-        const counts = getCounts(obj, d.properties.terytId);
-        // console.log(counts);
-        num.value = `${counts[0]} ≈ ${renderPercent(counts[1])}%`;
+        if (vuerouter.name === 'Regions') {
+          // console.log(props.place);
+          if (props?.place) {
+            const tid = String(d.properties.terytId).padStart(2, '0');
+            // console.log(tid);
+            num.value = groups.value[tid][props.place]?.qty;
+          }
+        } else {
+          const obj = vuerouter.name === 'Top' ? streetObject?.value?.regions : regions.value;
+          const counts = getCounts(obj, d.properties.terytId);
+          num.value = `${counts[0]} ≈ ${renderPercent(counts[1])}%`;
+        }
       })
       .on("mouseout", function () {
         unit.value = num.value = '';
