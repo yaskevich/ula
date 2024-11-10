@@ -1,13 +1,13 @@
 <template>
   <!-- <h2>Analysis of the street names of Poland</h2> -->
   <n-space>
-    <D3Map />
+    <D3Map :street="street" />
     <div>
-      <div v-for="(val, index) in (store.freq as any).slice(0, 500) ">
+      <div v-for="(val, index) in stats ">
         <n-button text :type="route.fullPath !== `/country/${index + 1}` ? 'default' : 'info'"
-          @click="router.push(`/country/${index + 1}`)">{{
+          @click="showName(index, val.name)">{{
             index + 1
-          }}. {{ val[0] }}</n-button>
+          }}. {{ val.name }}</n-button>
       </div>
     </div>
   </n-space>
@@ -20,13 +20,31 @@
 </template>
 
 <script setup lang="ts">
-import store from '../store';
+import { onBeforeMount, ref } from 'vue';
 import D3Map from './D3Map.vue';
 import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
 const route = useRoute();
-// console.log(route.fullPath);
+const stats = ref();
+const street = ref('');
+
+const showName = (index: number, name: string) => {
+  router.push(`/country/${index + 1}`);
+  street.value = name;
+};
+
+const getNames = async () => {
+  const response = await fetch('/api/names');
+  if (response.status === 200) {
+    const data = await response.json();
+    stats.value = data;
+    street.value = data[0].name;
+  }
+};
+
+onBeforeMount(async () => await getNames());
+
 </script>
 
 <style scoped>
