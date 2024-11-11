@@ -165,6 +165,10 @@ app.get('/api/street', async (req, res) => {
   res.json(reply);
 });
 
+app.get('/api/names', async (req, res) => {
+  const result = await db.all("SELECT NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM list GROUP BY NAZWA_1 ORDER BY qty DESC LIMIT 500");
+  res.json(result);
+});
 
 app.listen(port);
 console.log(`Backend is at port ${port}`);
