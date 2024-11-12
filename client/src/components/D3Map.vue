@@ -1,7 +1,5 @@
 <template>
   <div style="min-width:500px">
-    <!-- <h3>{{ streetObject?.name }} [{{ streetObject?.freq }}] 🏅{{ curIndex + 1 }}</h3> -->
-    <!-- <h5> <i class="pi pi-info-circle"></i> {{ unit }} {{ num }} </h5> -->
     <n-checkbox @update:checked="showHideCaptions" :default-checked="true" v-if="vuerouter.name !== 'Regions'" />
     <!-- <n-button @click="console.log(props.place)">check</n-button> -->
     <div ref="mapRef" id="map">
@@ -48,6 +46,7 @@ import { onBeforeRouteUpdate } from 'vue-router';
 
 const props = defineProps({
   place: { type: Number },
+  street: { type: String }
 });
 
 const vuerouter = useRoute();
@@ -233,8 +232,7 @@ const loadStreet = async () => {
     // console.log("load regions");
     await getGroups();
   } else if (vuerouter.name === 'Top') {
-    const streetUnit = store.freq[id.value - 1];
-    streetObject.value = await getStreet(String(streetUnit[0]));
+    streetObject.value = await getStreet(String(props.street));
   }
 
   let svg = d3.select(svgRef.value);
@@ -257,8 +255,6 @@ const loadStreet = async () => {
 
   const path = d3.geoPath().projection(projection);
 
-  // const obj = vuerouter.name === 'Top' ? streetObject.value : store.freq;
-  // const dataset = (obj as keyable).regions;
   const values = Object.values(vuerouter.name === 'Top' ? streetObject?.value?.regions : regions.value).map((x: any) => x[1]);
   const ext = d3.extent(values) as Array<number>;
   const last = ext[1];
@@ -308,7 +304,7 @@ const loadStreet = async () => {
           if (props?.place) {
             const tid = String(d.properties.terytId).padStart(2, '0');
             // console.log(tid);
-            num.value = groups.value[tid][props.place]?.qty;
+            num.value = groups.value[tid][props.place - 1]?.qty;
           }
         } else {
           const obj = vuerouter.name === 'Top' ? streetObject?.value?.regions : regions.value;
@@ -328,8 +324,8 @@ const loadStreet = async () => {
       }
       const regionData = groups.value[String(d.properties.terytId).padStart(2, '0')];
       if (regionData?.length) {
-        const idx = props.place || 0;
-        const regionInfo = regionData?.[idx];
+        const idx = props.place || 1;
+        const regionInfo = regionData?.[idx - 1];
         return regionInfo?.title;
         // console.log(groups.value);
       } else {
