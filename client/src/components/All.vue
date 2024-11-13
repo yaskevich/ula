@@ -66,6 +66,7 @@ const limit = Number(route.params.limit) || 500;
 const editMode = ref(true);
 const stem = ref<IInfo>({ title: '', emoji: '', names: [], leaf: 1, en: '', id: null, parent: null, num: null });
 const datum = reactive({} as keyable);
+const stats = ref();
 
 const saveStem = async () => {
     showModal.value = false;
@@ -108,7 +109,6 @@ const openModal = (id: number, name: string, item: IInfo) => {
     }
 };
 
-
 const isLoaded = ref(false);
 
 const options = [
@@ -122,18 +122,27 @@ const options = [
         value: 'id2'
     },];
 
+const getNames = async () => {
+    const response = await fetch('/api/names');
+    if (response.status === 200) {
+        const data = await response.json();
+        stats.value = data;
+    }
+};
+
 onBeforeMount(async () => {
     const response = await fetch('/api/onto');
     if (response.status === 200) {
         const fetched = await response.json();
         fetched.forEach((x: any) => x.names = JSON.parse(x.names));
-
-        for (const [key, val] of Object.entries<any>((store.freq as any).slice(0, limit))) {
-            const name = val[0];
-            const qty = val[1];
-            const cat = fetched?.find((x: any) => x.names?.includes(name));
+        await getNames();
+        // console.log(stats.value);
+        const chunk = stats.value.slice(0, limit);
+        for (const index in chunk) {
+            const val = chunk[index];
+            const cat = fetched?.find((x: any) => x.names?.includes(val.name));
             const parent = fetched?.find((x: any) => x.id === cat?.parent);
-            datum[String(key)] = { name, qty, parent, cat, key };
+            datum[String(index)] = { name: val.name, qty: val.qty, parent, cat, key: index };
         }
 
         isLoaded.value = true;
