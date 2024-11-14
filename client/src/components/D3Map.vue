@@ -298,17 +298,15 @@ const loadStreet = async () => {
       .attr("d", path as any)
       .on("mouseover", (e: any, d: any) => {
         unit.value = d.properties.nazwa + ' w-wo';
+        const tid = String(d.properties.terytId).padStart(2, '0');
 
         if (vuerouter.name === 'Regions') {
-          // console.log(props.place);
           if (props?.place) {
-            const tid = String(d.properties.terytId).padStart(2, '0');
-            // console.log(tid);
             num.value = groups.value[tid][props.place - 1]?.qty;
           }
         } else {
           const obj = vuerouter.name === 'Top' ? streetObject?.value?.regions : regions.value;
-          const counts = getCounts(obj, d.properties.terytId);
+          const counts = getCounts(obj, tid);
           num.value = `${counts[0]} ≈ ${renderPercent(counts[1])}%`;
         }
       })
