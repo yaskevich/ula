@@ -155,12 +155,14 @@ app.get('/api/regions', async (req, res) => {
 
 app.get('/api/street', async (req, res) => {
   const name = req.query.name;
+  const regions = await db.all("SELECT woj as woj, count(woj) as qty FROM list WHERE nazwa_1 IS NOT NULL GROUP BY woj");
+  const stats = Object.fromEntries(regions.map(item => [item.woj, item.qty]));
   const allCount = await db.get("SELECT count(*) as qty FROM list where nazwa_1 = ?", name);
   const result = await db.all("select woj as woj, count(NAZWA_1) as qty, round(100.0 * count(nazwa_1)/?) as pc from list where nazwa_1 = ? group by woj", allCount.qty, name);
   const reply = {
     name,
     freq: allCount.qty,
-    regions: Object.fromEntries(result.map(item => [item.woj, [item.qty, item.pc]]))
+    regions: Object.fromEntries(result.map(item => [item.woj, [item.qty, (100.0 * item.qty / stats[item.woj]).toFixed(2), item.pc, stats[item.woj]]]))
   }
   res.json(reply);
 });
