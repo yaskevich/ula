@@ -6,9 +6,10 @@
       <div id="main">
         <div id="nav">
           <router-link to="/home">Home</router-link> |
-          <router-link to="/country/1">Country top</router-link> |
-          <router-link to="/regions/1">Regional tops</router-link> |
+          <router-link to="/country">Country top</router-link> |
+          <router-link to="/regions">Regional tops</router-link> |
           <router-link to="/list/500">Full list</router-link> |
+          <router-link to="/structure">Structure</router-link> |
           <router-link to="/lexicon">Lexicon</router-link>
         </div>
       </div>

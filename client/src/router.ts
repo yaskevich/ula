@@ -4,6 +4,7 @@ const routes = [
   {
     path: '/home',
     name: 'Home',
+    alias: '/',
     // component: Home,
     component: () => import('./components/Home.vue'),
   },
@@ -12,6 +13,12 @@ const routes = [
     name: 'Lexicon',
     // component: Home,
     component: () => import('./components/Lexicon.vue'),
+  },
+  {
+    path: '/structure',
+    name: 'Structure',
+    // component: Home,
+    component: () => import('./components/Structure.vue'),
   },
   {
     path: '/country/:id?',
