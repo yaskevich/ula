@@ -22,6 +22,15 @@ const db = await open({ filename: path.join(__dirname, '..', 'data', 'data.db'),
 
 // await db.exec('CREATE TABLE IF NOT EXISTS ontology (id INTEGER PRIMARY KEY AUTOINCREMENT, emoji TEXT, title TEXT, en TEXT, names JSON, level INTEGER, parent INTEGER NOT NULL DEFAULT 0, leaf BOOLEAN DEFAULT(FALSE))');
 
+
+// import
+// delete from list where nazwa_1 is null;
+
+await db.exec('CREATE TABLE IF NOT EXISTS morph (basis TEXT, word TEXT, pos1 TEXT, pos2 TEXT, formant TEXT, class TEXT)');
+
+// miły	mile	J	R	e	suffix
+
+
 // await db.close();
 
 // let db = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cats.json'))).filter(x => !parseInt(x.stem));
@@ -169,6 +178,11 @@ app.get('/api/street', async (req, res) => {
 
 app.get('/api/names', async (req, res) => {
   const result = await db.all("SELECT NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM list GROUP BY NAZWA_1 ORDER BY qty DESC LIMIT 500");
+  res.json(result);
+});
+
+app.get('/api/words', async (req, res) => {
+  const result = await db.all("SELECT LENGTH(nazwa_1) - LENGTH(REPLACE(nazwa_1,' ', '')) AS words, COUNT(*) as qty FROM list GROUP BY words ORDER BY words desc");
   res.json(result);
 });
 
