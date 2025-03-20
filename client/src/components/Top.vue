@@ -3,7 +3,7 @@
   <n-space>
     <D3Map :street="street" />
     <div>
-      <div v-for="(val, index) in stats ">
+      <div v-for="(val, index) in stats">
         <n-button text :type="route.fullPath !== `/country/${index + 1}` ? 'default' : 'info'"
           @click="showName(index, val.name)">{{
             index + 1
@@ -20,14 +20,15 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, ref } from 'vue';
+import { onBeforeMount, ref, toRaw } from 'vue';
+import { useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router';
 import D3Map from './D3Map.vue';
-import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
 const route = useRoute();
 const stats = ref();
 const street = ref('');
+const id = ref(Number(toRaw(route?.params?.id)) || 0);
 
 const showName = (index: number, name: string) => {
   router.push(`/country/${index + 1}`);
@@ -39,9 +40,16 @@ const getNames = async () => {
   if (response.status === 200) {
     const data = await response.json();
     stats.value = data;
-    street.value = data[0].name;
+    console.log(data.length);
+    street.value = data[id.value].name;
   }
 };
+
+onBeforeRouteUpdate(async (to, from) => {
+  // console.log('top route update', to.params);
+  const num = Number(to.params.id);
+  street.value = stats.value[num].name;
+});
 
 onBeforeMount(async () => await getNames());
 
