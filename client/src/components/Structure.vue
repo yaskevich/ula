@@ -1,7 +1,8 @@
 <template>
     <h3>Structure of street names</h3>
     <div id="graph"></div>
-    <n-data-table :columns="columns" :data="stats" />
+    <n-data-table :columns="columns" :data="stats" :row-props="rowProps" :row-class-name="rowClassName"
+        style="font-weight:bold;" />
 </template>
 
 
@@ -10,7 +11,26 @@ import { onBeforeMount, onMounted, ref } from 'vue';
 import type { DataTableColumns } from 'naive-ui';
 import * as d3 from 'd3';
 
+const rowClassName = (row: IWord) => {
+    if (row.qty > 10000) {
+        return 'good'
+    } else if (row.qty > 1000) {
+        return 'pass'
+    } else if (row.qty > 100) {
+        return 'bad';
+    }
+    return 'hell';
+};
 const stats = ref<Array<IWord>>();
+
+const rowProps = (row: IWord) => {
+    return {
+        style: 'cursor: pointer;',
+        onClick: () => {
+            console.info(row.words, row.qty)
+        }
+    }
+};
 
 const columns: DataTableColumns = [
     {
@@ -72,8 +92,25 @@ onMounted(async () => {
     renderBar();
 });
 </script>
-<style>
-.bar {
-    fill: steelblue;
+<style scoped>
+:deep(.bar) {
+    /* fill: steelblue; */
+    fill: #cc3232;
+}
+
+:deep(.good td) {
+    background-color: #99c140 !important;
+}
+
+:deep(.pass td) {
+    background-color: #e7b416 !important;
+}
+
+:deep(.bad td) {
+    background-color: #db7b2b !important;
+}
+
+:deep(.hell td) {
+    background-color: #cc3232 !important;
 }
 </style>
