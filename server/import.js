@@ -10,11 +10,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.join(__dirname, '..', 'data');
 const db = new DatabaseSync(path.join(dataDir, 'data.db'));
 
-const files = {
-    'ULIC2': ['woj', 'pow', 'gmi', 'rodz_gmi', 'sym', 'sym_ul', 'cecha', 'nazwa_1', 'nazwa_2', 'stan_na'],
-};
+const files = ['ULIC', 'TERC'];
 
-for (const item in files) {
+for (const item of files) {
     const itemRegexp = new RegExp(item + ".*?\.csv");
     const itemCSV = fs.readdirSync(dataDir).find(x => x.match(itemRegexp));
     // console.log(item, itemCSV);
@@ -25,7 +23,8 @@ for (const item in files) {
 
     const csvContent = fs.readFileSync(path.join(dataDir, itemCSV), 'utf-8').replace(/[\u200B-\u200D\uFEFF]/g, '');
     const csvArr = await csv.parse(csvContent, { delimiter: ';', columns: true, skip_empty_lines: true, quote: null });
-    const keys = files[item];
+    const keys = Object.keys(csvArr[0]);
+
     await db.exec('BEGIN');
     try {
         await db.exec(`DROP TABLE IF EXISTS "${item}"`);
@@ -57,14 +56,10 @@ for (const item in files) {
     // 296306 via CLI import
     console.log('⬞ CSV', csvArr.length);
     console.log('⬞ SQL', allCount.qty);
-    db.close();
     console.log(`⬞ ${item} → done!`);
 }
 
-
-
-
-// 
+db.close();
 
 
 
