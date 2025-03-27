@@ -142,7 +142,7 @@ app.get('/api/default', async (req, res) => {
 });
 
 app.get('/api/groups', async (req, res) => {
-  const result = await db.all("SELECT woj as region, nazwa_1 as title, count(nazwa_1) as qty FROM list WHERE title IS NOT NULL GROUP BY nazwa_1, woj ORDER BY count(nazwa_1) DESC");
+  const result = await db.all("SELECT woj as region, nazwa_1 as title, count(nazwa_1) as qty FROM ulic WHERE title IS NOT NULL GROUP BY nazwa_1, woj ORDER BY count(nazwa_1) DESC");
   const hash = {};
   for (const item of result) {
     const datum = { title: item.title, qty: item.qty };
@@ -156,18 +156,18 @@ app.get('/api/groups', async (req, res) => {
 });
 
 app.get('/api/regions', async (req, res) => {
-  const allCount = await db.get("SELECT count(*) as qty FROM list where nazwa_1 <> '' ");
+  const allCount = await db.get("SELECT count(*) as qty FROM ulic where nazwa_1 <> '' ");
   // console.log(allCount);
-  const result = await db.all("SELECT woj as woj, count(*) as qty, round(100.0 * count(*)/?) as pc FROM list where nazwa_1 <> '' group by woj order by qty DESC", allCount.qty);
+  const result = await db.all("SELECT woj as woj, count(*) as qty, round(100.0 * count(*)/?) as pc FROM ulic where nazwa_1 <> '' group by woj order by qty DESC", allCount.qty);
   res.json(Object.fromEntries(result.map(item => [item.woj, [item.qty, item.pc]])));
 });
 
 app.get('/api/street', async (req, res) => {
   const name = req.query.name;
-  const regions = await db.all("SELECT woj as woj, count(woj) as qty FROM list WHERE nazwa_1 IS NOT NULL GROUP BY woj");
+  const regions = await db.all("SELECT woj as woj, count(woj) as qty FROM ulic WHERE nazwa_1 IS NOT NULL GROUP BY woj");
   const stats = Object.fromEntries(regions.map(item => [item.woj, item.qty]));
-  const allCount = await db.get("SELECT count(*) as qty FROM list where nazwa_1 = ?", name);
-  const result = await db.all("select woj as woj, count(NAZWA_1) as qty, round(100.0 * count(nazwa_1)/?) as pc from list where nazwa_1 = ? group by woj", allCount.qty, name);
+  const allCount = await db.get("SELECT count(*) as qty FROM ulic where nazwa_1 = ?", name);
+  const result = await db.all("select woj as woj, count(NAZWA_1) as qty, round(100.0 * count(nazwa_1)/?) as pc from ulic where nazwa_1 = ? group by woj", allCount.qty, name);
   const reply = {
     name,
     freq: allCount.qty,
@@ -177,14 +177,27 @@ app.get('/api/street', async (req, res) => {
 });
 
 app.get('/api/names', async (req, res) => {
-  const result = await db.all("SELECT NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM list GROUP BY NAZWA_1 ORDER BY qty DESC LIMIT 500");
+  const result = await db.all("SELECT NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC LIMIT 500");
   res.json(result);
 });
 
 app.get('/api/words', async (req, res) => {
-  const result = await db.all("SELECT LENGTH(nazwa_1) - LENGTH(REPLACE(nazwa_1,' ', '')) AS words, COUNT(*) as qty FROM list GROUP BY words ORDER BY words desc");
+  const result = await db.all("SELECT LENGTH(nazwa_1) - LENGTH(REPLACE(nazwa_1,' ', '')) + 1 AS words, COUNT(*) as qty FROM ulic GROUP BY words ORDER BY words desc");
   res.json(result);
 });
+
+
+app.get('/api/places', async (req, res) => {
+  // console.log(req.params);
+  // const region = req.params.region ? String(Number(req.params.region)).padStart(2, '0') : '';
+  // const district = req.params.district ? String(Number(req.params.district)).padStart(2, '0') : '';
+  // console.log(`|${region}|${district}|`);
+  const sql = `SELECT * from terc where ${Object.keys(req.query).map(x => x + '=?').join(' AND ')}`;
+  console.log(sql);
+  const result = await db.all(sql, Object.values(req.query));
+  res.json(result);
+});
+
 
 app.listen(port);
 console.log(`Backend is at port ${port}`);
