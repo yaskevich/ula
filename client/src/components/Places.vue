@@ -1,7 +1,7 @@
 <template>
     Places
     <div v-if="isLoaded">
-        <n-select v-model:value="selected" :options="topList" @update:value="chosen" />
+        <n-tree block-line :cascade="true" :data="topList" :on-load="handleLoad" />
 
         <div v-for="item in placesList">
             {{ item.label }}
@@ -11,37 +11,55 @@
 
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue';
+import store from '../store';
+import type { TreeDropInfo, TreeOption } from 'naive-ui';
 
 const selected = ref(null);
 const topList = ref();
 const isLoaded = ref(false);
 const placesList = ref();
 
+const handleLoad = async (node: TreeOption) => {
+    console.log('!', node);
+    let params = {};
+    const type = (node.NAZWA_DOD as string).split(' ').shift();
+    switch (type) {
+        case "województwo":
+            params = {
+                woj: node.WOJ,
+                gmi: ''
+            };
+            break;
+        case 'powiat':
+            params = {
+                woj: node.WOJ,
+                pow: node.POW,
+            }
+            break;
+        case 'gmina':
+            params = {
+                woj: node.WOJ,
+                pow: node.POW,
+                gmi: node.GMI
+            }
+            break;
+        default:
+            console.log("ISSUE", node.NAZWA_DOD);
+    }
 
-const chosen = async () => {
-    console.log(selected.value);
-    if (selected.value) {
-        const params = {
-            // woj: '',
-            woj: selected.value,
-            // gmi : '',
-            nazwa_dod: 'powiat'
-        };
-        const response = await fetch('/api/places?' + new URLSearchParams(params).toString());
-        if (response.status === 200) {
-            const data = await response.json();
-            placesList.value = data.map((x: any) => ({ label: x.NAZWA, value: x.POW }));
-            console.log(data);
-            isLoaded.value = true;
-        } else {
-            console.log("fetching error");
-        }
+    const data = await store.api('places', params);
+    console.log(type, params, data);
+
+    node.children = data.map((x: any) => ({ ...x, label: `${x.NAZWA} (${x.NAZWA_DOD})`, isLeaf: false }));
+    if (type === 'powiat') {
+        node.children = node.children?.filter(x => x.GMI);
+    } else if (type === 'województwo') {
+        node.children = node.children?.filter(x => x.POW);
     }
 };
 
 const getPlaces = async () => {
     const params = {
-
     };
     const response = await fetch('/api/places?' + new URLSearchParams(params).toString());
     if (response.status === 200) {
@@ -50,7 +68,6 @@ const getPlaces = async () => {
     } else {
         console.log("fetching error");
     }
-
 };
 
 onBeforeMount(async () => {
@@ -59,15 +76,12 @@ onBeforeMount(async () => {
         pow: '',
         gmi: ''
     };
-    const response = await fetch('/api/places?' + new URLSearchParams(params).toString());
-    if (response.status === 200) {
-        const data = await response.json();
-        topList.value = data.map((x: any) => ({ label: x.NAZWA, value: x.WOJ }));
-        console.log(data);
-        isLoaded.value = true;
-    } else {
-        console.log("fetching error");
-    }
+
+    const data = await store.api('places', params);
+    topList.value = data.map((x: any) => ({ ...x, label: x.NAZWA, isLeaf: false }));
+    console.log(data);
+    isLoaded.value = true;
+
 });
 
 </script>
