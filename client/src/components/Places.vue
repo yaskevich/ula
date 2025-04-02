@@ -1,7 +1,7 @@
 <template>
     Places
     <div v-if="isLoaded">
-        <n-tree block-line :cascade="true" :data="topList" :on-load="handleLoad" />
+        <n-tree :node-props="nodeProps" block-line :cascade="true" :data="topList" :on-load="handleLoad" />
 
         <div v-for="item in placesList">
             {{ item.label }}
@@ -13,11 +13,32 @@
 import { onBeforeMount, ref } from 'vue';
 import store from '../store';
 import type { TreeDropInfo, TreeOption } from 'naive-ui';
+import { useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router';
 
-const selected = ref(null);
+const router = useRouter();
+const route = useRoute();
+
 const topList = ref();
 const isLoaded = ref(false);
 const placesList = ref();
+
+const nodeProps = ({ option }: { option: TreeOption }) => {
+    return {
+        onClick() {
+            console.info(`[Click] ${option.label}`);
+            console.log(option);
+            router.push(`/place/${option?.SYM || option.key}`);
+        },
+        onContextmenu(e: MouseEvent): void {
+            // optionsRef.value = [option]
+            // showDropdownRef.value = true
+            // xRef.value = e.clientX
+            // yRef.value = e.clientY
+            console.log(e.clientX, e.clientY)
+            e.preventDefault()
+        }
+    }
+};
 
 const scheme = {
     "00": "część miejscowości",

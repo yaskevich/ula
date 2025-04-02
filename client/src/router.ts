@@ -5,20 +5,27 @@ const routes = [
     path: '/home',
     name: 'Home',
     alias: '/',
-    // component: Home,
     component: () => import('./components/Home.vue'),
   },
   {
     path: '/lexicon',
     name: 'Lexicon',
-    // component: Home,
     component: () => import('./components/Lexicon.vue'),
   },
   {
     path: '/structure',
     name: 'Structure',
-    // component: Home,
     component: () => import('./components/Structure.vue'),
+  },
+  {
+    path: '/place/:id?',
+    name: 'Place',
+    component: () => import('./components/Place.vue'),
+  },
+  {
+    path: '/places',
+    name: 'Places',
+    component: () => import('./components/Places.vue'),
   },
   {
     path: '/country/:id?',

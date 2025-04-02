@@ -227,11 +227,12 @@ const getRegions = async () => {
 
 const loadStreet = async () => {
   id.value = id.value || 1;
-
+  // console.log('load street', id.value);
   if (vuerouter.name === 'Regions') {
     // console.log("load regions");
     await getGroups();
   } else if (vuerouter.name === 'Top') {
+    // console.log(props.street);
     streetObject.value = await getStreet(String(props.street));
   }
 
@@ -357,10 +358,7 @@ const loadStreet = async () => {
     showHideCaptions(true);
 
     if (vuerouter.name !== 'Regions') {
-
-
       const legend = carta.append('g');
-
       const ticksNumber = 10;
 
       legend
@@ -388,13 +386,13 @@ const loadStreet = async () => {
 
 const loadNext = () => {
   id.value += 1;
-  router.push(`/country/${id.value}`)
+  router.push(`/country/${id.value}`);
 };
 
 const loadPrevious = () => {
   if (id.value) {
     id.value -= 1;
-    router.push(`/country/${id.value}`)
+    router.push(`/country/${id.value}`);
   }
 };
 
@@ -429,10 +427,10 @@ onMounted(async () => {
 });
 
 onBeforeRouteUpdate(async (to, from) => {
-  // console.log(to.params);
+  // console.log('route update', to.params);
   id.value = Number(to.params.id);
   loadStreet();
-})
+});
 </script>
 
 <style scoped lang="scss">
