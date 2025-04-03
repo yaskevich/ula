@@ -10,6 +10,7 @@
           <router-link to="/regions">Regional tops</router-link> |
           <router-link to="/list/500">Full list</router-link> |
           <router-link to="/structure">Structure</router-link> |
+          <router-link to="/places">Places</router-link> |
           <router-link to="/lexicon">Lexicon</router-link>
         </div>
       </div>
@@ -18,7 +19,7 @@
       </div>
       <div class="footer p-2" id="about">
         <p>
-          <a href="https://yaskevich.com/" target="_blank">Alyaxey Yaskevich</a>, 2024. Version: {{ store.version }}
+          <a href="https://yaskevich.com/" target="_blank">Alyaxey Yaskevich</a>, 2024&mdash;2025. Version: {{ store.version }}
           <a :href="store.git" target="_blank">
             <i class="pi pi-github"></i>
           </a>
