@@ -1,9 +1,15 @@
+import { reactive } from 'vue';
 import { feature as topofeature } from 'topojson-client';
 import project from '../package.json';
 import topos from '../../data/poland.json';
 
 const geofeatures = (<any>topofeature((topos as any), (topos.objects.woj as any))).features;
 const git = project?.repository?.url ? 'https' + project.repository.url.slice(3, -4) : '';
+
+
+const state = reactive({
+    exp: [] as Array<string>,
+});
 
 const api = async (route: string, params?: keyable) => {
     const response = await fetch(`/api/${route}?` + new URLSearchParams(params).toString());
@@ -19,4 +25,5 @@ export default {
     git,
     geofeatures,
     api,
+    state,
 };

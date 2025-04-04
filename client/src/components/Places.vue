@@ -1,7 +1,9 @@
 <template>
     Places
+    {{ store.state }}
     <div v-if="isLoaded">
-        <n-tree :node-props="nodeProps" block-line :cascade="true" :data="topList" :on-load="handleLoad" />
+        <n-tree :node-props="nodeProps" block-line :data="topList" :on-load="handleLoad"
+            :expanded-keys="store.state.exp" :watch-props="['defaultExpandedKeys']" @update:expanded-keys="expand" />
 
         <div v-for="item in placesList">
             {{ item.label }}
@@ -16,11 +18,13 @@ import type { TreeDropInfo, TreeOption } from 'naive-ui';
 import { useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router';
 
 const router = useRouter();
-const route = useRoute();
-
+// const route = useRoute();
 const topList = ref();
 const isLoaded = ref(false);
 const placesList = ref();
+const expand = (ids: Array<string>) => {
+    store.state.exp = ids;
+};
 
 const nodeProps = ({ option }: { option: TreeOption }) => {
     return {
