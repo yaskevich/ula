@@ -1,5 +1,7 @@
 <template>
     <!-- {{ datum }} -->
+    <div id="graph"></div>
+
     <div v-if="isLoaded">
         <h3>{{ datum?.NAZWA }}</h3>
         <n-space vertical>
@@ -26,16 +28,26 @@ const route = useRoute();
 const isLoaded = ref(false);
 const datum = ref();
 const id = route.params?.id;
-const streets = ref();
+const streets = ref([] as Array<IStreet>);
 
-const codes = { 'ul.': 'ulica', 'al.': 'aleja' } as keyable;
+const codes = { 'ul.': 'ulica', 'al.': 'aleja', 'pl.': 'plac' } as keyable;
 const renderType = (code: string) => codes?.[code] || code;
+
+const summary = ref({});
 
 onBeforeMount(async () => {
     const data = await store.api('places', { sym: id });
     datum.value = data?.shift();
-    streets.value = (await store.api('streets', { sym: id })).sort((a: any, b: any) => a.NAZWA_1.localeCompare(b.NAZWA_1)).sort((a: any, b: any) => a.CECHA.localeCompare(b.CECHA));;
+    streets.value = (await store.api('streets', { sym: id })).sort((a: IStreet, b: IStreet) => a.NAZWA_1.localeCompare(b.NAZWA_1)).sort((a: IStreet, b: IStreet) => a.CECHA.localeCompare(b.CECHA));
+    summary.value = Object.entries(streets.value.reduce((acc: any, { CECHA }) => ({ ...acc, [CECHA]: (acc[CECHA] || 0) + 1 }), {})).map(x => ({ title: x[0], qty: x[1] })).sort((a:any, b:any) => b.qty - a.qty);
     isLoaded.value = true;
+    store.renderBar(summary.value as [], 'title', 'qty', true);
 });
 
 </script>
+
+<style scoped>
+:deep(.bar) {
+    fill: steelblue;
+}
+</style>
