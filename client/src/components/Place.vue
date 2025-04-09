@@ -11,6 +11,11 @@
                 </n-tag>
                 <n-tag type="success">{{ item.NAZWA_1 }}</n-tag>
                 <n-tag v-if="item?.NAZWA_2" type="warning">{{ item.NAZWA_2 }}</n-tag>
+                <n-tag v-if="catsMap?.[catsDict?.[item?.NAZWA_1]?.parent]" type="error"> {{
+                    catsMap?.[catsDict?.[item?.NAZWA_1]?.parent]?.emoji }} {{
+                        catsMap?.[catsDict?.[item?.NAZWA_1]?.parent]?.title }}
+                </n-tag>
+
                 <!-- {{ item }} -->
             </n-space>
         </n-space>
@@ -35,13 +40,36 @@ const renderType = (code: string) => codes?.[code] || code;
 
 const summary = ref({});
 
+const catsMap = ref();
+const catsDict = ref();
+
 onBeforeMount(async () => {
     const data = await store.api('places', { sym: id });
     datum.value = data?.shift();
     streets.value = (await store.api('streets', { sym: id })).sort((a: IStreet, b: IStreet) => a.NAZWA_1.localeCompare(b.NAZWA_1)).sort((a: IStreet, b: IStreet) => a.CECHA.localeCompare(b.CECHA));
-    summary.value = Object.entries(streets.value.reduce((acc: any, { CECHA }) => ({ ...acc, [CECHA]: (acc[CECHA] || 0) + 1 }), {})).map(x => ({ title: x[0], qty: x[1] })).sort((a:any, b:any) => b.qty - a.qty);
+    summary.value = Object.entries(streets.value.reduce((acc: any, { CECHA }) => ({ ...acc, [CECHA]: (acc[CECHA] || 0) + 1 }), {})).map(x => ({ title: x[0], qty: x[1] })).sort((a: any, b: any) => b.qty - a.qty);
     isLoaded.value = true;
     store.renderBar(summary.value as [], 'title', 'qty', true);
+
+    const ontology = await store.api('ontology', {});
+    const cats = {} as keyable;
+    // console.log(ontology);
+    const dict = {} as keyable;
+
+    for (const item of ontology) {
+        // console.log(item.names);
+        cats[item.id] = item;
+        if (item?.names) {
+            for (const name of JSON.parse(item.names)) {
+                console.log(name, item.title, item.emoji);
+                dict[name] = item;
+            }
+        }
+    }
+
+    catsDict.value = dict;
+    catsMap.value = cats;
+
 });
 
 </script>
