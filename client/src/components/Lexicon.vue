@@ -8,11 +8,16 @@
             block-line :override-default-node-click-behavior="override" @drop="handleDrop"></n-tree>
     </div>
     <n-modal :show="showModal">
-        <div style="background-color: white">
-            <n-button @click="showModal = false" type="info">Close</n-button>
-            <n-input v-model:value="selected.title" v-if="selected?.title"></n-input>
-            <!-- {{ selected }} -->
-            <EmojiPicker :native="true" @select="onSelectEmoji" disable-skin-tones />
+        <div style="background-color: white; padding: .5rem; border-radius: 3px;">
+            <n-space vertical>
+                <n-space justify="space-between">
+                    <n-button @click="save" type="success">Save</n-button>
+                    <n-button @click="showModal = false" type="info">Close</n-button>
+                </n-space>
+                <n-input v-model:value="selected.title" v-if="selected?.title"></n-input>
+                <!-- {{ selected }} -->
+                <EmojiPicker :native="true" @select="onSelectEmoji" disable-skin-tones />
+            </n-space>
         </div>
     </n-modal>
 
@@ -25,30 +30,27 @@ import type { TreeDropInfo, TreeOption } from 'naive-ui';
 import type { TreeOverrideNodeClickBehavior } from 'naive-ui';
 import EmojiPicker from 'vue3-emoji-picker';
 import 'vue3-emoji-picker/css';
+import store from '../store';
 
 const editMode = ref(true);
 const showModal = ref(false);
 const nodesList = ref();
 const nodeRefs = ref();
-
 const selected = ref<TreeOption>();
+
+const save = async () => {
+    showModal.value = false;
+    if (selected.value) {
+        const result = store.save('topic', selected.value);
+        console.log(result);
+    }
+};
 
 const onSelectEmoji = async (emoji: any) => {
     if (selected.value) {
         selected.value.emoji = emoji.i;
         console.log(selected.value);
         console.log(emoji.i);
-        const response = await fetch('/api/topic', {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json', // this needs to be defined
-            },
-            body: JSON.stringify(selected.value),
-        });
-        if (response.status === 200) {
-            const data = await response.json();
-            console.log("move", data);
-        }
     }
 };
 
@@ -107,7 +109,7 @@ const toTree = (arr: any) => {
 
 
 onBeforeMount(async () => {
-    const response = await fetch('/api/onto');
+    const response = await fetch('/api/ontology');
     if (response.status === 200) {
         const data = await response.json();
         nodesList.value = data;

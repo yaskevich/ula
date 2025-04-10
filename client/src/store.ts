@@ -7,16 +7,13 @@ import topos from '../../data/poland.json';
 const geofeatures = (<any>topofeature((topos as any), (topos.objects.woj as any))).features;
 const git = project?.repository?.url ? 'https' + project.repository.url.slice(3, -4) : '';
 
-
 const state = reactive({
     exp: [] as Array<string>,
 });
 
-
 const renderBar = (data: [], keyName: string, valName: string, addKey = false) => {
     if (data?.length) {
-        console.log(data);
-
+        // console.log(data);
         const margin = { top: 20, right: 20, bottom: 30, left: 40 },
             width = 960 - margin.left - margin.right,
             height = 500 - margin.top - margin.bottom;
@@ -28,7 +25,6 @@ const renderBar = (data: [], keyName: string, valName: string, addKey = false) =
             .attr("height", height + margin.top + margin.bottom)
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
 
         const formatKey = (x: any) => String(x[keyName]) + (addKey ? ` (${String(x[valName])})` : '');
 
@@ -59,13 +55,30 @@ const api = async (route: string, params?: keyable) => {
     } else {
         console.log("fetching error");
     }
-}
+};
+
+const save = async (route: string, params: keyable) => {
+    const response = await fetch(`/api/${route}`, {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json', // this needs to be defined
+        },
+        body: JSON.stringify(params),
+    });
+    if (response.status === 200) {
+        const data = await response.json();
+        // console.log('result', data);
+    } else {
+        console.log('fetching error');
+    }
+};
 
 export default {
     version: project?.version,
     git,
     geofeatures,
     api,
+    save,
     state,
     renderBar,
 };
