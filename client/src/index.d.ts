@@ -35,7 +35,17 @@ interface IStreetInfo {
   regions: keyable;
 }
 
+interface IStreet {
+  CECHA: string;
+  NAZWA_1: string;
+  NAZWA_2?: string;
+}
 
+
+interface IWord {
+  words: number;
+  qty: number;
+}
 interface IInfo {
   title: string;
   en: string;
@@ -44,4 +54,5 @@ interface IInfo {
   emoji: string;
   names: Array<string>;
   leaf: number;
+  num: number | null;
 }
