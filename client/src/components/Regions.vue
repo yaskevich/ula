@@ -21,14 +21,20 @@
 import store from '../store';
 import D3Map from './D3Map.vue';
 import { ref, onBeforeMount, toRaw } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router';
 import router from '../router';
 
 const vuerouter = useRoute();
 const id = ref(Number(vuerouter.params.id) || 1);
 
 const showPlace = () => {
-    console.log("set place", id.value);
+    // console.log("set place", id.value);
     router.push(`/regions/${id.value}`)
-}
+};
+
+onBeforeRouteUpdate(async (to, from) => {
+    // console.log('top route update', to.params);
+    id.value = Number(to.params?.id) || 1;
+});
+
 </script>

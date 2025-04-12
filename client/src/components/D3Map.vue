@@ -386,7 +386,11 @@ const loadStreet = async () => {
 
 const loadNext = () => {
   id.value += 1;
-  router.push(`/country/${id.value}`);
+  if (vuerouter.name === 'Regions') {
+    router.push(`/regions/${id.value}`);
+  } else {
+    router.push(`/country/${id.value}`);
+  }
 };
 
 const loadPrevious = () => {
