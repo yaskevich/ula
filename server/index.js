@@ -100,12 +100,18 @@ const getOntology = async () => {
 // await db.exec('CREATE TABLE ontology (id INTEGER PRIMARY KEY AUTOINCREMENT, emoji TEXT, title TEXT, en TEXT, names JSON, level INTEGER, parent INTEGER NOT NULL DEFAULT 0, leaf BOOLEAN DEFAULT(FALSE))');
 // getOntology();
 
+const pop = await db.all("SELECT NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC LIMIT 200");
+for (let item of pop) {
+  const q = `select * from ulic where nazwa_1 like '%${item.name}%' and pow = 65 and woj = 14`;
+  const r = await db.get(q);
+  if (!r?.NAZWA_1) {
+    console.log(item);
+  }
+}
 
 const port = process.env.PORT || 8080;
 const appName = __package?.name || String(port);
-
 const app = express();
-
 app.use(compression());
 app.set('trust proxy', 1);
 app.use(bodyParser.json());
@@ -131,7 +137,7 @@ app.post('/api/topic', async (req, res) => {
   res.json(result);
 });
 
-app.get('/api/onto', async (req, res) => {
+app.get('/api/ontology', async (req, res) => {
   const result = await db.all('SELECT * FROM ontology ORDER BY title');
   res.json(result);
 });
@@ -187,17 +193,23 @@ app.get('/api/words', async (req, res) => {
 });
 
 
+app.get('/api/streets', async (req, res) => {
+  const result = await db.all("SELECT * FROM ulic WHERE sym = ?", req.query.sym);
+  res.json(result);
+});
+
+
 app.get('/api/places', async (req, res) => {
   // console.log(req.params);
+  const table = ((req.query.woj && req.query.pow && req.query.gmi) || req.query.sym) ? 'simc' : 'terc';
   // const region = req.params.region ? String(Number(req.params.region)).padStart(2, '0') : '';
   // const district = req.params.district ? String(Number(req.params.district)).padStart(2, '0') : '';
   // console.log(`|${region}|${district}|`);
-  const sql = `SELECT * from terc where ${Object.keys(req.query).map(x => x + '=?').join(' AND ')}`;
+  const sql = `SELECT ROWID as key, * from ${table} where ${Object.keys(req.query).map(x => x + '=?').join(' AND ')}`;
   console.log(sql);
   const result = await db.all(sql, Object.values(req.query));
   res.json(result);
 });
-
 
 app.listen(port);
 console.log(`Backend is at port ${port}`);
