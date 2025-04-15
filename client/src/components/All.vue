@@ -32,6 +32,7 @@
                 <div>
                     <n-tag :type="val.parent?.title === '<unsorted>' ? 'error' : 'warning'" size="small"
                         v-if="val?.parent?.title">
+                        {{ val.parent?.emoji }}
                         {{ val.parent.title || '<error>' }}
                     </n-tag>
                     <n-tag type="info" size="small" v-if="val.cat?.id">
@@ -62,35 +63,26 @@ const showModal = ref(false);
 const router = useRouter();
 const route = useRoute();
 const limit = Number(route.params.limit) || 500;
-// console.log(route.params.limit);
 const editMode = ref(true);
 const stem = ref<IInfo>({ title: '', emoji: '', names: [], leaf: 1, en: '', id: null, parent: null, num: null });
 const datum = reactive({} as keyable);
 const stats = ref();
+const isLoaded = ref(false);
 
 const saveStem = async () => {
     showModal.value = false;
     // console.log(stem.value);
-    const response = await fetch('/api/topic', {
-        method: "POST",
-        headers: {
-            'Content-Type': 'application/json', // this needs to be defined
-        },
-        body: JSON.stringify(stem.value),
-    });
-    if (response.status === 200) {
-        const data = await response.json();
-        if (data.changes === 1) {
-            const response = await fetch('/api/default');
-            if (response.status === 200 && stem?.value?.num) {
-                const parent = await response.json();
-                stem.value.id = data.lastID;
-                datum[stem.value.num]["cat"] = stem.value;
-                datum[stem.value.num]["parent"] = parent;
-            }
-        } else {
-            console.error("topic saving error!");
+    const data = await store.save('topic', stem.value);
+    if (data.changes === 1) {
+        const response = await fetch('/api/default');
+        if (response.status === 200 && stem?.value?.num) {
+            const parent = await response.json();
+            stem.value.id = data.lastID;
+            datum[stem.value.num]["cat"] = stem.value;
+            datum[stem.value.num]["parent"] = parent;
         }
+    } else {
+        console.error("topic saving error!");
     }
 };
 
@@ -109,47 +101,23 @@ const openModal = (id: number, name: string, item: IInfo) => {
     }
 };
 
-const isLoaded = ref(false);
-
-const options = [
-    {
-        label: 'tag1',
-        value: 'id1',
-        disabled: true
-    },
-    {
-        label: 'tag2',
-        value: 'id2'
-    },];
-
 const getNames = async () => {
-    const response = await fetch('/api/names');
-    if (response.status === 200) {
-        const data = await response.json();
-        stats.value = data;
-    }
+    stats.value = await store.api('names');
 };
 
 onBeforeMount(async () => {
-    const response = await fetch('/api/onto');
-    if (response.status === 200) {
-        const fetched = await response.json();
-        fetched.forEach((x: any) => x.names = JSON.parse(x.names));
-        await getNames();
-        // console.log(stats.value);
-        const chunk = stats.value.slice(0, limit);
-        for (const index in chunk) {
-            const val = chunk[index];
-            const cat = fetched?.find((x: any) => x.names?.includes(val.name));
-            const parent = fetched?.find((x: any) => x.id === cat?.parent);
-            datum[String(index)] = { name: val.name, qty: val.qty, parent, cat, key: index };
-        }
-
-        isLoaded.value = true;
-    } else {
-        console.log("fetching error");
+    const fetched = await store.api('ontology');
+    fetched.forEach((x: any) => x.names = JSON.parse(x.names));
+    await getNames();
+    // console.log(stats.value);
+    const chunk = stats.value.slice(0, limit);
+    for (const index in chunk) {
+        const val = chunk[index];
+        const cat = fetched?.find((x: any) => x.names?.includes(val.name));
+        const parent = fetched?.find((x: any) => x.id === cat?.parent);
+        datum[String(index)] = { name: val.name, qty: val.qty, parent, cat, key: index };
     }
-
+    isLoaded.value = true;
 });
 
 </script>
