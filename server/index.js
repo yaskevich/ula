@@ -192,12 +192,30 @@ app.get('/api/words', async (req, res) => {
   res.json(result);
 });
 
-
 app.get('/api/streets', async (req, res) => {
-  const result = await db.all("SELECT * FROM ulic WHERE sym = ?", req.query.sym);
+  let result;
+  if (req.query.sym.length > 6) {
+    result = await db.all("SELECT * FROM ulic WHERE sym = ?", req.query.sym);
+  } else {
+    const info = await db.get("select * from terc where rowid = ?", req.query.sym);
+    const vals = [];
+    let sql = 'SELECT * FROM ulic WHERE '
+    if (info.WOJ) {
+      sql += 'WOJ = ?';
+      vals.push(info.WOJ);
+      if (info.POW) {
+        sql += ' AND POW = ?';
+        vals.push(info.POW);
+        if (info.GMI) {
+          sql += ' AND GMI = ?';
+          vals.push(info.GMI);
+        }
+      }
+    }
+    result = await db.all(sql, vals);
+  }
   res.json(result);
 });
-
 
 app.get('/api/places', async (req, res) => {
   // console.log(req.params);
