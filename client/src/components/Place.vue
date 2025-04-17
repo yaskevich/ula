@@ -1,9 +1,7 @@
 <template>
-    <!-- {{ datum }} -->
+    <h3 class="place">{{ datum?.NAZWA }} {{ info?.NAZWA }} {{ info?.NAZWA_DOD }} </h3>
     <div id="graph"></div>
-
     <div v-if="isLoaded">
-        <h3>{{ datum?.NAZWA }}</h3>
         <n-space vertical>
             <n-space v-for="item in streets">
                 <n-tag :type="item.CECHA === 'ul.' ? 'info' : 'default'">
@@ -15,10 +13,11 @@
                     catsMap?.[catsDict?.[item?.NAZWA_1]?.parent]?.emoji }} {{
                         catsMap?.[catsDict?.[item?.NAZWA_1]?.parent]?.title }}
                 </n-tag>
-
-                <!-- {{ item }} -->
             </n-space>
         </n-space>
+    </div>
+    <div v-else>
+        ...loading...
     </div>
 </template>
 
@@ -27,23 +26,21 @@ import { useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router';
 import { onBeforeMount, ref } from 'vue';
 import store from '../store';
 
-
-const router = useRouter();
+// const router = useRouter();
 const route = useRoute();
 const isLoaded = ref(false);
 const datum = ref();
 const id = route.params?.id;
 const streets = ref([] as Array<IStreet>);
-
 const codes = { 'ul.': 'ulica', 'al.': 'aleja', 'pl.': 'plac' } as keyable;
 const renderType = (code: string) => codes?.[code] || code;
-
 const summary = ref({});
-
 const catsMap = ref();
 const catsDict = ref();
+const info = ref();
 
 onBeforeMount(async () => {
+    info.value = await store.api('unit', { sym: id });
     const data = await store.api('places', { sym: id });
     datum.value = data?.shift();
     streets.value = (await store.api('streets', { sym: id })).sort((a: IStreet, b: IStreet) => a.NAZWA_1.localeCompare(b.NAZWA_1)).sort((a: IStreet, b: IStreet) => a.CECHA.localeCompare(b.CECHA));
@@ -61,7 +58,7 @@ onBeforeMount(async () => {
         cats[item.id] = item;
         if (item?.names) {
             for (const name of JSON.parse(item.names)) {
-                console.log(name, item.title, item.emoji);
+                // console.log(name, item.title, item.emoji);
                 dict[name] = item;
             }
         }
@@ -77,5 +74,13 @@ onBeforeMount(async () => {
 <style scoped>
 :deep(.bar) {
     fill: steelblue;
+}
+
+.place {
+    text-transform: lowercase;
+}
+
+.place::first-letter {
+    text-transform: capitalize
 }
 </style>
