@@ -47,8 +47,8 @@ const getNames = async () => {
 
 onBeforeRouteUpdate(async (to, from) => {
   // console.log('top route update', to.params);
-  const num = Number(to.params.id);
-  street.value = stats.value[num].name;
+  const num = Number(to.params?.id) || 1;
+  street.value = stats.value?.[num]?.name;
 });
 
 onBeforeMount(async () => await getNames());

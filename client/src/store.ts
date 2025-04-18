@@ -68,6 +68,7 @@ const save = async (route: string, params: keyable) => {
     if (response.status === 200) {
         const data = await response.json();
         // console.log('result', data);
+        return data;
     } else {
         console.log('fetching error');
     }

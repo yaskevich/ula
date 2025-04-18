@@ -10,7 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.join(__dirname, '..', 'data');
 const db = new DatabaseSync(path.join(dataDir, 'data.db'));
 
-const files = ['ULIC', 'TERC'];
+const files = ['ULIC', 'TERC', 'SIMC'];
 
 for (const item of files) {
     const itemRegexp = new RegExp(item + ".*?\.csv");
