@@ -13,6 +13,9 @@
                     catsMap?.[catsDict?.[item?.NAZWA_1]?.parent]?.emoji }} {{
                         catsMap?.[catsDict?.[item?.NAZWA_1]?.parent]?.title }}
                 </n-tag>
+                <n-tag v-if="item?.qty && item.qty > 1"
+                    :color="{ color: 'lightyellow', textColor: 'darkred', borderColor: 'silver' }">{{ item.qty
+                    }}</n-tag>
             </n-space>
         </n-space>
     </div>
@@ -43,7 +46,18 @@ onBeforeMount(async () => {
     info.value = await store.api('unit', { sym: id });
     const data = await store.api('places', { sym: id });
     datum.value = data?.shift();
-    streets.value = (await store.api('streets', { sym: id })).sort((a: IStreet, b: IStreet) => a.NAZWA_1.localeCompare(b.NAZWA_1)).sort((a: IStreet, b: IStreet) => a.CECHA.localeCompare(b.CECHA));
+    const list = (await store.api('streets', { sym: id })).sort((a: IStreet, b: IStreet) => a.NAZWA_1.localeCompare(b.NAZWA_1)).sort((a: IStreet, b: IStreet) => a.CECHA.localeCompare(b.CECHA));
+    if (id?.length < 6) {
+        const uniq = {} as keyable;
+        for (const item of list) {
+            uniq[item?.NAZWA_1] ? uniq[item.NAZWA_1].qty += 1 : uniq[item.NAZWA_1] = { ...item, qty: 1 };
+        }
+        streets.value = Object.values(uniq);
+    } else {
+        streets.value = list;
+    }
+
+
     summary.value = Object.entries(streets.value.reduce((acc: any, { CECHA }) => ({ ...acc, [CECHA]: (acc[CECHA] || 0) + 1 }), {})).map(x => ({ title: x[0], qty: x[1] })).sort((a: any, b: any) => b.qty - a.qty);
     isLoaded.value = true;
     store.renderBar(summary.value as [], 'title', 'qty', true);
