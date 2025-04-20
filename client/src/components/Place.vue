@@ -1,27 +1,39 @@
 <template>
     <h3 class="place">{{ datum?.NAZWA }} {{ info?.NAZWA }} {{ info?.NAZWA_DOD }} </h3>
-    <div id="graph"></div>
-    <div v-if="isLoaded">
-        <n-space vertical>
-            <n-space v-for="item in streets">
-                <n-tag :type="item.CECHA === 'ul.' ? 'info' : 'default'">
-                    <div style="min-width:3rem;">{{ renderType(item.CECHA) }}</div>
-                </n-tag>
-                <n-tag type="success">{{ item.NAZWA_1 }}</n-tag>
-                <n-tag v-if="item?.NAZWA_2" type="warning">{{ item.NAZWA_2 }}</n-tag>
-                <n-tag v-if="catsMap?.[catsDict?.[item?.NAZWA_1]?.parent]" type="error"> {{
-                    catsMap?.[catsDict?.[item?.NAZWA_1]?.parent]?.emoji }} {{
-                        catsMap?.[catsDict?.[item?.NAZWA_1]?.parent]?.title }}
-                </n-tag>
-                <n-tag v-if="item?.qty && item.qty > 1"
-                    :color="{ color: 'lightyellow', textColor: 'darkred', borderColor: 'silver' }">{{ item.qty
-                    }}</n-tag>
+    <n-space vertical>
+
+        <div id="graph"></div>
+        <n-radio-group v-model:value="mode" name="radiogroup">
+            <n-space>
+                <n-radio :key="1" :value="1" label="Default" />
+                <n-radio :key="2" :value="2" label="Hide unique" />
             </n-space>
-        </n-space>
-    </div>
-    <div v-else>
-        ...loading...
-    </div>
+        </n-radio-group>
+
+        <div v-if="isLoaded">
+            <n-space vertical>
+                <template v-for="item in streets">
+                    <n-space v-if="mode === 1 || (item?.qty && item?.qty > 1)">
+                        <n-tag :type="item.CECHA === 'ul.' ? 'info' : 'default'">
+                            <div style="min-width:3rem;">{{ renderType(item.CECHA) }}</div>
+                        </n-tag>
+                        <n-tag type="success">{{ item.NAZWA_1 }}</n-tag>
+                        <n-tag v-if="item?.NAZWA_2" type="warning">{{ item.NAZWA_2 }}</n-tag>
+                        <n-tag v-if="catsMap?.[catsDict?.[item?.NAZWA_1]?.parent]" type="error"> {{
+                            catsMap?.[catsDict?.[item?.NAZWA_1]?.parent]?.emoji }} {{
+                                catsMap?.[catsDict?.[item?.NAZWA_1]?.parent]?.title }}
+                        </n-tag>
+                        <n-tag v-if="item?.qty && item.qty > 1"
+                            :color="{ color: 'lightyellow', textColor: 'darkred', borderColor: 'silver' }">{{ item.qty
+                            }}</n-tag>
+                    </n-space>
+                </template>
+            </n-space>
+        </div>
+        <div v-else>
+            ...loading...
+        </div>
+    </n-space>
 </template>
 
 <script setup lang="ts">
@@ -41,6 +53,7 @@ const summary = ref({});
 const catsMap = ref();
 const catsDict = ref();
 const info = ref();
+const mode = ref(1);
 
 onBeforeMount(async () => {
     info.value = await store.api('unit', { sym: id });
@@ -50,7 +63,8 @@ onBeforeMount(async () => {
     if (id?.length < 6) {
         const uniq = {} as keyable;
         for (const item of list) {
-            uniq[item?.NAZWA_1] ? uniq[item.NAZWA_1].qty += 1 : uniq[item.NAZWA_1] = { ...item, qty: 1 };
+            const key = item.CECHA + item?.NAZWA_1 + item?.NAZWA_2;
+            uniq[key] ? uniq[key].qty += 1 : uniq[key] = { ...item, qty: 1 };
         }
         streets.value = Object.values(uniq);
     } else {
