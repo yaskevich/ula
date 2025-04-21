@@ -3,17 +3,20 @@
     <n-space vertical>
 
         <div id="graph"></div>
-        <n-radio-group v-model:value="mode" name="radiogroup">
-            <n-space>
-                <n-radio :key="1" :value="1" label="Default" />
-                <n-radio :key="2" :value="2" label="Hide unique" />
-            </n-space>
+        <n-radio-group v-model:value="showMode" name="radiogroup">
+            <n-radio :key="1" :value="1" label="Default" />
+            <n-radio :key="2" :value="2" label="Hide unique" />
+        </n-radio-group>
+
+        <n-radio-group v-model:value="sortMode" name="radiogroup" @update:value="resort">
+            <n-radio :key="1" :value="1" label="Alphabetically" />
+            <n-radio :key="2" :value="2" label="By quantity" />
         </n-radio-group>
 
         <div v-if="isLoaded">
             <n-space vertical>
                 <template v-for="item in streets">
-                    <n-space v-if="mode === 1 || (item?.qty && item?.qty > 1)">
+                    <n-space v-if="showMode === 1 || (item?.qty && item?.qty > 1)">
                         <n-tag :type="item.CECHA === 'ul.' ? 'info' : 'default'">
                             <div style="min-width:3rem;">{{ renderType(item.CECHA) }}</div>
                         </n-tag>
@@ -53,7 +56,17 @@ const summary = ref({});
 const catsMap = ref();
 const catsDict = ref();
 const info = ref();
-const mode = ref(1);
+const showMode = ref(1);
+const sortMode = ref(1);
+
+const resort = (val: any) => {
+    if (val === 2) {
+        console.log('qty');
+        streets.value = streets.value.sort((a: IStreet, b: IStreet) => (b?.qty || 0) - (a?.qty || 0));
+    } else {
+        streets.value = streets.value.sort((a: IStreet, b: IStreet) => a.NAZWA_1.localeCompare(b.NAZWA_1)).sort((a: IStreet, b: IStreet) => a.CECHA.localeCompare(b.CECHA));
+    }
+};
 
 onBeforeMount(async () => {
     info.value = await store.api('unit', { sym: id });
