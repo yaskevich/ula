@@ -1,42 +1,67 @@
 <template>
   <n-back-top />
-  <n-modal-provider>
-
-    <div class="container">
-      <div id="main">
-        <div id="nav">
-          <router-link to="/home">Home</router-link> |
-          <router-link to="/country">Country top</router-link> |
-          <router-link to="/regions">Regional tops</router-link> |
-          <router-link to="/list/500">Full list</router-link> |
-          <router-link to="/structure">Structure</router-link> |
-          <router-link to="/places">Places</router-link> |
-          <router-link to="/lexicon">Lexicon</router-link>
+  <n-config-provider :locale="locale" :date-locale="dateLocale">
+    <n-modal-provider>
+      <div class="container">
+        <div id="main">
+          <div id="nav">
+            <n-button @click="
+              () => {
+                locale = null;
+                dateLocale = null
+              }
+            ">
+              EN
+            </n-button>
+            <n-button @click="
+              () => {
+                locale = plPL;
+                dateLocale = datePlPL
+              }
+            ">
+              PL
+            </n-button>
+            <router-link to="/home">Home</router-link> |
+            <router-link to="/country">Country top</router-link> |
+            <router-link to="/regions">Regional tops</router-link> |
+            <router-link to="/list/500">Full list</router-link> |
+            <router-link to="/structure">Structure</router-link> |
+            <router-link to="/places">Places</router-link> |
+            <router-link to="/lexicon">Lexicon</router-link>
+          </div>
+        </div>
+        <div class="content">
+          <router-view />
+        </div>
+        <div class="footer p-2" id="about">
+          <p>
+            <a href="https://yaskevich.com/" target="_blank">Alyaxey Yaskevich</a>, 2024&mdash;2025. Version: {{
+              store.version }}
+            <a :href="store.git" target="_blank">
+              <i class="pi pi-github"></i>
+            </a>
+          </p>
+          <p>
+            <small>
+              The icon «Place Marker» is from
+              <a href="https://icons8.com/icon/30622/place-marker" target="_blank">Icons8</a>.
+            </small>
+          </p>
         </div>
       </div>
-      <div class="content">
-        <router-view />
-      </div>
-      <div class="footer p-2" id="about">
-        <p>
-          <a href="https://yaskevich.com/" target="_blank">Alyaxey Yaskevich</a>, 2024&mdash;2025. Version: {{ store.version }}
-          <a :href="store.git" target="_blank">
-            <i class="pi pi-github"></i>
-          </a>
-        </p>
-        <p>
-          <small>
-            The icon «Place Marker» is from
-            <a href="https://icons8.com/icon/30622/place-marker" target="_blank">Icons8</a>.
-          </small>
-        </p>
-      </div>
-    </div>
-  </n-modal-provider>
+    </n-modal-provider>
+  </n-config-provider>
 </template>
 
 <script setup lang="ts">
 import store from './store';
+import { onBeforeMount, onMounted, ref } from 'vue';
+import type { NDateLocale, NLocale } from 'naive-ui';
+import { datePlPL, plPL } from 'naive-ui';
+
+const locale = ref<NLocale | null>(null);
+const dateLocale = ref<NDateLocale | null>(null);
+
 </script>
 
 <style>
