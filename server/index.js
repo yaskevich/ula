@@ -100,14 +100,14 @@ const getOntology = async () => {
 // await db.exec('CREATE TABLE ontology (id INTEGER PRIMARY KEY AUTOINCREMENT, emoji TEXT, title TEXT, en TEXT, names JSON, level INTEGER, parent INTEGER NOT NULL DEFAULT 0, leaf BOOLEAN DEFAULT(FALSE))');
 // getOntology();
 
-const pop = await db.all("SELECT NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC LIMIT 200");
-for (let item of pop) {
-  const q = `select * from ulic where nazwa_1 like '%${item.name}%' and pow = 65 and woj = 14`;
-  const r = await db.get(q);
-  if (!r?.NAZWA_1) {
-    console.log(item);
-  }
-}
+// const pop = await db.all("SELECT NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC LIMIT 200");
+// for (let item of pop) {
+//   const q = `select * from ulic where nazwa_1 like '%${item.name}%' and pow = 65 and woj = 14`;
+//   const r = await db.get(q);
+//   if (!r?.NAZWA_1) {
+//     console.log(item);
+//   }
+// }
 
 const port = process.env.PORT || 8080;
 const appName = __package?.name || String(port);
@@ -192,6 +192,11 @@ app.get('/api/words', async (req, res) => {
   res.json(result);
 });
 
+app.get('/api/unit', async (req, res) => {
+  const result = await db.get(req.query.sym.length > 6 ? "SELECT * FROM ulic WHERE sym = ?" : "select * from terc where rowid = ?", req.query.sym);
+  res.json(result);
+});
+
 app.get('/api/streets', async (req, res) => {
   let result;
   if (req.query.sym.length > 6) {
@@ -218,7 +223,6 @@ app.get('/api/streets', async (req, res) => {
 });
 
 app.get('/api/places', async (req, res) => {
-  // console.log(req.params);
   const table = ((req.query.woj && req.query.pow && req.query.gmi) || req.query.sym) ? 'simc' : 'terc';
   // const region = req.params.region ? String(Number(req.params.region)).padStart(2, '0') : '';
   // const district = req.params.district ? String(Number(req.params.district)).padStart(2, '0') : '';
