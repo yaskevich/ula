@@ -1,10 +1,8 @@
 <template>
     Places
-    {{ store.state }}
     <div v-if="isLoaded">
         <n-tree :node-props="nodeProps" block-line :data="topList" :on-load="handleLoad"
             :expanded-keys="store.state.exp" :watch-props="['defaultExpandedKeys']" @update:expanded-keys="expand" />
-
         <div v-for="item in placesList">
             {{ item.label }}
         </div>
@@ -31,7 +29,9 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
         onClick() {
             console.info(`[Click] ${option.label}`);
             console.log(option);
-            router.push(`/place/${option?.SYM || option.key}`);
+            if (!['99'].includes((option as any).RM)) {
+                router.push(`/place/${option?.SYM || option.key}`);
+            }
         },
         onContextmenu(e: MouseEvent): void {
             // optionsRef.value = [option]
