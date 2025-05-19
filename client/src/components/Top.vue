@@ -4,7 +4,7 @@
     <D3Map :street="street" />
     <div>
       <div v-for="(val, index) in stats">
-        <n-button text :type="route.fullPath !== `/country/${index + 1}` ? 'default' : 'info'"
+        <n-button text :type="route.fullPath !== `/country/${index+1}` ? 'default' : 'info'"
           @click="showName(index, val.name)">{{
             index + 1
           }}. {{ val.name }}</n-button>
@@ -28,7 +28,7 @@ const router = useRouter();
 const route = useRoute();
 const stats = ref();
 const street = ref('');
-const id = ref(Number(toRaw(route?.params?.id)) || 0);
+const id = ref(Number(toRaw(route?.params?.id)) -1 || 0);
 
 const showName = (index: number, name: string) => {
   router.push(`/country/${index + 1}`);
@@ -48,7 +48,7 @@ const getNames = async () => {
 onBeforeRouteUpdate(async (to, from) => {
   // console.log('top route update', to.params);
   const num = Number(to.params?.id) || 1;
-  street.value = stats.value?.[num]?.name;
+  street.value = stats.value?.[num-1]?.name;
 });
 
 onBeforeMount(async () => await getNames());

@@ -7,7 +7,7 @@
         <text x="0" y="15" class="title">{{ unit }}</text>
         <text x="250" y="25" class="quantity">{{ num }}</text>
         <g v-if="vuerouter.name === 'Top'">
-          <text x="0" y="410">🏅{{ id }} ({{ streetObject?.freq }})</text>
+          <text x="0" y="410">🏅{{ id + 1 }} ({{ streetObject?.freq }})</text>
           <text x="0" y="440" class="street">{{ streetObject?.name }}</text>
         </g>
       </svg>
@@ -51,7 +51,7 @@ const props = defineProps({
 
 const vuerouter = useRoute();
 // console.log(vuerouter.name);
-const id = ref(Number(toRaw(vuerouter?.params?.id)));
+const id = ref(Number(toRaw(vuerouter?.params?.id))-1);
 // console.log("requested", id.value);
 const svgWidth = ref(0);
 const svgHeight = ref(0);
@@ -226,13 +226,13 @@ const getRegions = async () => {
 
 
 const loadStreet = async () => {
-  id.value = id.value || 1;
-  // console.log('load street', id.value);
+  id.value = id.value || 0;
+  console.log('load street', id.value);
   if (vuerouter.name === 'Regions') {
     // console.log("load regions");
     await getGroups();
   } else if (vuerouter.name === 'Top') {
-    // console.log(props.street);
+    console.log(props.street);
     streetObject.value = await getStreet(String(props.street));
   }
 
@@ -432,7 +432,7 @@ onMounted(async () => {
 
 onBeforeRouteUpdate(async (to, from) => {
   // console.log('route update', to.params);
-  id.value = Number(to.params.id);
+  id.value = Number(to.params.id) - 1;
   loadStreet();
 });
 </script>
