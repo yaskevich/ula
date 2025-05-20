@@ -1,20 +1,41 @@
 <template>
     <h3 class="place">{{ datum?.NAZWA }} {{ info?.NAZWA }} {{ info?.NAZWA_DOD }} </h3>
+
+
     <n-space vertical>
 
-        <div id="graph"></div>
-        <n-radio-group v-model:value="showMode" name="radiogroup">
-            <n-radio :key="1" :value="1" label="Default" />
-            <n-radio :key="2" :value="2" label="Hide unique" />
-        </n-radio-group>
 
-        <n-radio-group v-model:value="sortMode" name="radiogroup" @update:value="resort">
-            <n-radio :key="1" :value="1" label="Alphabetically" />
-            <n-radio :key="2" :value="2" label="By quantity" />
-        </n-radio-group>
+        <div id="graph"></div>
 
         <div v-if="isLoaded">
+            <n-descriptions label-placement="left" bordered :column="1">
+                <n-descriptions-item label="Min Letters">
+                    {{ tops.ltchars.NAZWA_1 }} ({{ tops.ltchars.CECHA }})
+                </n-descriptions-item>
+                <n-descriptions-item label="Max Letters">
+                    {{ tops.gtchars.NAZWA_1 }} ({{ tops.gtchars.CECHA }})
+                </n-descriptions-item>
+                <n-descriptions-item label="Max Letters Streets">
+                    {{ tops.gtchars2.NAZWA_1 }} ({{ tops.gtchars2.CECHA }})
+                </n-descriptions-item>
+
+                <n-descriptions-item label="Max Words">
+                    {{ tops.gtwords.NAZWA_1 }} ({{ tops.gtwords.CECHA }})
+                </n-descriptions-item>
+            </n-descriptions>
+
+   
             <n-space vertical>
+                <n-radio-group v-model:value="showMode" name="radiogroup">
+                <n-radio :key="1" :value="1" label="Default" />
+                <n-radio :key="2" :value="2" label="Hide unique" />
+            </n-radio-group>
+
+            <n-radio-group v-model:value="sortMode" name="radiogroup" @update:value="resort">
+                <n-radio :key="1" :value="1" label="Alphabetically" />
+                <n-radio :key="2" :value="2" label="By quantity" />
+            </n-radio-group>
+
                 <template v-for="item in streets">
                     <n-space v-if="showMode === 1 || (item?.qty && item?.qty > 1)">
                         <n-tag :type="item.CECHA === 'ul.' ? 'info' : 'default'">
@@ -58,6 +79,7 @@ const catsDict = ref();
 const info = ref();
 const showMode = ref(1);
 const sortMode = ref(1);
+const tops = {} as keyable;
 
 const resort = (val: any) => {
     if (val === 2) {
@@ -84,6 +106,24 @@ onBeforeMount(async () => {
         streets.value = list;
     }
 
+    // console.log(list);
+    const getName = (item: IStreet) => (item.CECHA === 'ul.' ? 'ulica ' : '') + item.NAZWA_1;
+
+    const longestStreets = list.filter((x: IStreet) => x.CECHA === 'ul.').sort(function (a: IStreet, b: IStreet) {
+        return getName(b).length - getName(a).length;
+    });
+    tops.gtchars2 = longestStreets[0];
+
+    const lng = list.sort(function (a: IStreet, b: IStreet) {
+        return getName(b).length - getName(a).length;
+    });
+
+    tops.gtwords = list.reduce(function (a: IStreet, b: IStreet) {
+        return getName(a).split(' ').length > getName(b).split(' ').length ? a : b;
+    });
+
+    tops.ltchars = lng.pop();
+    tops.gtchars = lng.shift();
 
     summary.value = Object.entries(streets.value.reduce((acc: any, { CECHA }) => ({ ...acc, [CECHA]: (acc[CECHA] || 0) + 1 }), {})).map(x => ({ title: x[0], qty: x[1] })).sort((a: any, b: any) => b.qty - a.qty);
     isLoaded.value = true;
