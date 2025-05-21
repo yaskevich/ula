@@ -100,12 +100,14 @@ const getOntology = async () => {
 // await db.exec('CREATE TABLE ontology (id INTEGER PRIMARY KEY AUTOINCREMENT, emoji TEXT, title TEXT, en TEXT, names JSON, level INTEGER, parent INTEGER NOT NULL DEFAULT 0, leaf BOOLEAN DEFAULT(FALSE))');
 // getOntology();
 
-// const pop = await db.all("SELECT NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC LIMIT 200");
+// const pop = await db.all("SELECT NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC LIMIT 500");
+// let i = 0;
 // for (let item of pop) {
+//   i += 1;
 //   const q = `select * from ulic where nazwa_1 like '%${item.name}%' and pow = 65 and woj = 14`;
 //   const r = await db.get(q);
 //   if (!r?.NAZWA_1) {
-//     console.log(item);
+//     console.log(i, "\t", item.name, "\t", item.qty);
 //   }
 // }
 
@@ -186,6 +188,12 @@ app.get('/api/names', async (req, res) => {
   const result = await db.all("SELECT NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC LIMIT 500");
   res.json(result);
 });
+
+app.get('/api/name', async (req, res) => {
+  const result = await db.all("SELECT * FROM (SELECT row_number() over (order by COUNT(nazwa_1) DESC) as 'rank',  NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC) as subquery WHERE name = ?", req.query.name);
+  res.json(result.shift());
+});
+
 
 app.get('/api/words', async (req, res) => {
   const result = await db.all("SELECT LENGTH(nazwa_1) - LENGTH(REPLACE(nazwa_1,' ', '')) + 1 AS words, COUNT(*) as qty FROM ulic GROUP BY words ORDER BY words desc");

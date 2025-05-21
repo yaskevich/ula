@@ -24,24 +24,24 @@
                 </n-descriptions-item>
             </n-descriptions>
 
-   
+
             <n-space vertical>
                 <n-radio-group v-model:value="showMode" name="radiogroup">
-                <n-radio :key="1" :value="1" label="Default" />
-                <n-radio :key="2" :value="2" label="Hide unique" />
-            </n-radio-group>
+                    <n-radio :key="1" :value="1" label="Default" />
+                    <n-radio :key="2" :value="2" label="Hide unique" />
+                </n-radio-group>
 
-            <n-radio-group v-model:value="sortMode" name="radiogroup" @update:value="resort">
-                <n-radio :key="1" :value="1" label="Alphabetically" />
-                <n-radio :key="2" :value="2" label="By quantity" />
-            </n-radio-group>
+                <n-radio-group v-model:value="sortMode" name="radiogroup" @update:value="resort">
+                    <n-radio :key="1" :value="1" label="Alphabetically" />
+                    <n-radio :key="2" :value="2" label="By quantity" />
+                </n-radio-group>
 
                 <template v-for="item in streets">
                     <n-space v-if="showMode === 1 || (item?.qty && item?.qty > 1)">
                         <n-tag :type="item.CECHA === 'ul.' ? 'info' : 'default'">
                             <div style="min-width:3rem;">{{ renderType(item.CECHA) }}</div>
                         </n-tag>
-                        <n-tag type="success">{{ item.NAZWA_1 }}</n-tag>
+                        <n-tag type="success" @click="goTo(item)">{{ item.NAZWA_1 }}</n-tag>
                         <n-tag v-if="item?.NAZWA_2" type="warning">{{ item.NAZWA_2 }}</n-tag>
                         <n-tag v-if="catsMap?.[catsDict?.[item?.NAZWA_1]?.parent]" type="error"> {{
                             catsMap?.[catsDict?.[item?.NAZWA_1]?.parent]?.emoji }} {{
@@ -65,7 +65,7 @@ import { useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router';
 import { onBeforeMount, ref } from 'vue';
 import store from '../store';
 
-// const router = useRouter();
+const router = useRouter();
 const route = useRoute();
 const isLoaded = ref(false);
 const datum = ref();
@@ -88,6 +88,11 @@ const resort = (val: any) => {
     } else {
         streets.value = streets.value.sort((a: IStreet, b: IStreet) => a.NAZWA_1.localeCompare(b.NAZWA_1)).sort((a: IStreet, b: IStreet) => a.CECHA.localeCompare(b.CECHA));
     }
+};
+
+const goTo = async (item: IStreet) => {
+    const info = await store.api('name', { name: item.NAZWA_1 });
+    router.push(`/country/${info.rank}`);
 };
 
 onBeforeMount(async () => {
