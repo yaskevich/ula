@@ -184,13 +184,16 @@ app.get('/api/street', async (req, res) => {
   res.json(reply);
 });
 
-app.get('/api/names', async (req, res) => {
-  const result = await db.all("SELECT NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC LIMIT 500");
+app.get('/api/names{/:id}', async (req, res) => {
+  const lim = 500;
+  const id = Number(req.params.id);
+  const offset = id ? id < 50 ? 0 : (id - 50) : 0;
+  const result = await db.all(`SELECT row_number() over (order by COUNT(nazwa_1) DESC) as 'rank', NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC LIMIT ${offset}, ${lim}`);
   res.json(result);
 });
 
 app.get('/api/name', async (req, res) => {
-  const result = await db.all("SELECT * FROM (SELECT row_number() over (order by COUNT(nazwa_1) DESC) as 'rank',  NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC) as subquery WHERE name = ?", req.query.name);
+  const result = await db.all("SELECT * FROM (SELECT row_number() over (order by COUNT(nazwa_1) DESC) as 'rank', NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC) as subquery WHERE name = ?", req.query.name);
   res.json(result.shift());
 });
 
