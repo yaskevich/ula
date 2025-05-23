@@ -2,6 +2,7 @@ import express from 'express';
 import path, { dirname } from 'path';
 import compression from 'compression';
 import bodyParser from 'body-parser';
+import history from 'connect-history-api-fallback';
 import fs from 'fs';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
@@ -15,10 +16,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const __package = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
 
-// const dictPath = path.join(__dirname, '..', 'data', 'dict.json')
-const ontoPath = path.join(__dirname, '..', 'data', 'onto.json')
+// const dictPath = path.join(__dirname, './', 'data', 'dict.json')
+const ontoPath = path.join(process.env.DATA, 'onto.json')
 
-const db = await open({ filename: path.join(__dirname, '..', 'data', 'data.db'), driver: sqlite3.cached.Database });
+const db = await open({ filename: path.join(process.env.DATA, 'data.db'), driver: sqlite3.cached.Database });
 
 // await db.exec('CREATE TABLE IF NOT EXISTS ontology (id INTEGER PRIMARY KEY AUTOINCREMENT, emoji TEXT, title TEXT, en TEXT, names JSON, level INTEGER, parent INTEGER NOT NULL DEFAULT 0, leaf BOOLEAN DEFAULT(FALSE))');
 
@@ -118,8 +119,17 @@ app.use(compression());
 app.set('trust proxy', 1);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
 // app.use(history());
-app.use(express.static(path.join(__dirname, '..', 'public')));
+
+app.use(history({
+  index: '/',
+  rewrites: [
+    { from: /\/api\/.*$/, to: (context) => context.parsedUrl.pathname }
+  ]
+}));
+app.use(express.static(path.join(__dirname, 'public')));
+
 
 app.post('/api/topic', async (req, res) => {
   // console.log(req.body);
@@ -172,6 +182,7 @@ app.get('/api/regions', async (req, res) => {
 
 app.get('/api/street', async (req, res) => {
   const name = req.query.name;
+  console.log('street',req.query.name);
   const regions = await db.all("SELECT woj as woj, count(woj) as qty FROM ulic WHERE nazwa_1 IS NOT NULL GROUP BY woj");
   const stats = Object.fromEntries(regions.map(item => [item.woj, item.qty]));
   const allCount = await db.get("SELECT count(*) as qty FROM ulic where nazwa_1 = ?", name);
