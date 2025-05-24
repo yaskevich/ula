@@ -51,11 +51,11 @@ const props = defineProps({
 
 const vuerouter = useRoute();
 // console.log(vuerouter.name);
-const id = ref(Number(toRaw(vuerouter?.params?.id))-1);
+const inId = Number(toRaw(vuerouter?.params?.id));
+const id = ref(inId > 0 ? inId - 1 : 0);
 // console.log("requested", id.value);
 const svgWidth = ref(0);
 const svgHeight = ref(0);
-
 let legendOffsetY = 0;
 const legendOffsetX = 5;
 const legendHeight = 10;
@@ -190,18 +190,6 @@ const chartClicked = async () => {
   }
 };
 
-const getStreet = async (name: string) => {
-  const response = await fetch('/api/street?' + new URLSearchParams({ name }).toString());
-  if (response.status === 200) {
-    const data = await response.json();
-    // console.log(data);
-    return data;
-  } else {
-    console.log("fetching error");
-  }
-};
-
-
 const getGroups = async () => {
   const response = await fetch('/api/groups');
   if (response.status === 200) {
@@ -224,7 +212,6 @@ const getRegions = async () => {
   }
 };
 
-
 const loadStreet = async () => {
   id.value = id.value || 0;
   console.log('load street', id.value);
@@ -233,7 +220,7 @@ const loadStreet = async () => {
     await getGroups();
   } else if (vuerouter.name === 'Top') {
     console.log(props.street);
-    streetObject.value = await getStreet(String(props.street));
+    streetObject.value = await store.api('street/' + props.street);
   }
 
   let svg = d3.select(svgRef.value);
@@ -450,7 +437,6 @@ onBeforeRouteUpdate(async (to, from) => {
   fill: #0f4260;
   font-size: 1.5em;
 }
-
 
 :deep(.title) {
   /* fill: #2196f3;

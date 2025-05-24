@@ -120,16 +120,14 @@ app.set('trust proxy', 1);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// app.use(history());
-
 app.use(history({
   index: '/',
+  // verbose: true,
   rewrites: [
-    { from: /\/api\/.*$/, to: (context) => context.parsedUrl.pathname }
+    { from: /\/api\/.*$/, to: (context) => context.parsedUrl.pathname + (context.parsedUrl.search || '') }
   ]
 }));
 app.use(express.static(path.join(__dirname, 'public')));
-
 
 app.post('/api/topic', async (req, res) => {
   // console.log(req.body);
@@ -180,9 +178,8 @@ app.get('/api/regions', async (req, res) => {
   res.json(Object.fromEntries(result.map(item => [item.woj, [item.qty, item.pc]])));
 });
 
-app.get('/api/street', async (req, res) => {
-  const name = req.query.name;
-  console.log('street',req.query.name);
+app.get('/api/street/:name', async (req, res) => {
+  const name = req.params.name;
   const regions = await db.all("SELECT woj as woj, count(woj) as qty FROM ulic WHERE nazwa_1 IS NOT NULL GROUP BY woj");
   const stats = Object.fromEntries(regions.map(item => [item.woj, item.qty]));
   const allCount = await db.get("SELECT count(*) as qty FROM ulic where nazwa_1 = ?", name);
@@ -207,7 +204,6 @@ app.get('/api/name', async (req, res) => {
   const result = await db.all("SELECT * FROM (SELECT row_number() over (order by COUNT(nazwa_1) DESC) as 'rank', NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC) as subquery WHERE name = ?", req.query.name);
   res.json(result.shift());
 });
-
 
 app.get('/api/words', async (req, res) => {
   const result = await db.all("SELECT LENGTH(nazwa_1) - LENGTH(REPLACE(nazwa_1,' ', '')) + 1 AS words, COUNT(*) as qty FROM ulic GROUP BY words ORDER BY words desc");
