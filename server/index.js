@@ -28,6 +28,9 @@ const db = await open({ filename: path.join(process.env.DATA, 'data.db'), driver
 // delete from list where nazwa_1 is null;
 
 await db.exec('CREATE TABLE IF NOT EXISTS morph (basis TEXT, word TEXT, pos1 TEXT, pos2 TEXT, formant TEXT, class TEXT)');
+await db.exec('CREATE TABLE IF NOT EXISTS ranking (sym_ul TEXT, rank INTEGER, qty INTEGER, name TEXT)');
+// insert into ranking (rank, sym_ul,name, qty) SELECT row_number() over (order by COUNT(nazwa_1) DESC) as 'rank', sym_ul, NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC;
+
 
 // miły	mile	J	R	e	suffix
 
@@ -111,6 +114,18 @@ const getOntology = async () => {
 //     console.log(i, "\t", item.name, "\t", item.qty);
 //   }
 // }
+
+// const pop = await db.all("SELECT NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC LIMIT 500");
+// let i = 0;
+// for (let item of pop) {
+//   i += 1;
+//   const q = `select * from ulic where nazwa_1 like '%${item.name}%' and pow = 65 and woj = 14`;
+//   const r = await db.get(q);
+//   if (!r?.NAZWA_1) {
+//     console.log(i, "\t", item.name, "\t", item.qty);
+//   }
+// }
+
 
 const port = process.env.PORT || 8080;
 const appName = __package?.name || String(port);
@@ -217,12 +232,13 @@ app.get('/api/unit', async (req, res) => {
 
 app.get('/api/streets', async (req, res) => {
   let result;
+
+  let sql = 'SELECT ulic.*, ranking.rank, ranking.qty as ttl, length(cast(ranking.rank as integer)) as ord FROM ulic join ranking on ulic.sym_ul = ranking.sym_ul WHERE ';
   if (req.query.sym.length > 6) {
-    result = await db.all("SELECT * FROM ulic WHERE sym = ?", req.query.sym);
+    result = await db.all(sql + "sym = ?", req.query.sym);
   } else {
     const info = await db.get("select * from terc where rowid = ?", req.query.sym);
     const vals = [];
-    let sql = 'SELECT * FROM ulic WHERE '
     if (info.WOJ) {
       sql += 'WOJ = ?';
       vals.push(info.WOJ);
