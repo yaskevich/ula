@@ -54,7 +54,7 @@ onMounted(async () => {
     await getWords();
     if (stats.value?.length) {
         const data = stats.value.filter(x => x.words > 6).reverse();
-        store.renderBar(data as [], 'words', 'qty');
+        store.renderBar('graph', data as [], 'words', 'qty');
     }
 });
 </script>
