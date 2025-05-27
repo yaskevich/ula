@@ -1,14 +1,14 @@
 <template>
     <h3 class="place">{{ datum?.NAZWA }} {{ info?.NAZWA }} {{ info?.NAZWA_DOD }} </h3>
-
-
     <n-space vertical>
-
-
         <div id="graph"></div>
-
+        <div id="pop"></div>
         <div v-if="isLoaded">
             <n-descriptions label-placement="left" bordered :column="1">
+                <n-descriptions-item label="Extended">
+                    <span style="font-weight: bolder;color:red;">{{ Math.round(extended / (streetNum || 1) * 1000) / 10
+                    }}% </span><em>{{ extended }}⬝{{ streets.length }} </em>
+                </n-descriptions-item>
                 <n-descriptions-item label="Min Letters">
                     {{ tops.ltchars.NAZWA_1 }} ({{ tops.ltchars.CECHA }})
                 </n-descriptions-item>
@@ -24,7 +24,6 @@
                 </n-descriptions-item>
             </n-descriptions>
 
-
             <n-space vertical>
                 <n-radio-group v-model:value="showMode" name="radiogroup">
                     <n-radio :key="1" :value="1" label="Default" />
@@ -34,6 +33,7 @@
                 <n-radio-group v-model:value="sortMode" name="radiogroup" @update:value="resort">
                     <n-radio :key="1" :value="1" label="Alphabetically" />
                     <n-radio :key="2" :value="2" label="By quantity" />
+                    <n-radio :key="3" :value="3" label="By popularity" />
                 </n-radio-group>
 
                 <template v-for="item in streets">
@@ -50,6 +50,9 @@
                         <n-tag v-if="item?.qty && item.qty > 1"
                             :color="{ color: 'lightyellow', textColor: 'darkred', borderColor: 'silver' }">{{ item.qty
                             }}</n-tag>
+                        <n-tag :title="`Rank: ${item.rank} Ttl: [${item.ttl}]`"
+                            :color="{ color: 'transparent', textColor: colors[(item?.ord)] }" :bordered="false">{{
+                                "■".repeat(item?.ord) }}</n-tag>
                     </n-space>
                 </template>
             </n-space>
@@ -80,9 +83,17 @@ const info = ref();
 const showMode = ref(1);
 const sortMode = ref(1);
 const tops = {} as keyable;
+const colors = { '1': 'darkred', '2': 'red', '3': 'orange', '4': 'gold', '5': 'gray', '6': 'silver' } as keyable;
+const ranks = ref({});
+const extended = ref(0);
+const streetNum = ref(0);
+const namesStats = ref({});
 
 const resort = (val: any) => {
-    if (val === 2) {
+    if (val === 3) {
+        console.log('ord');
+        streets.value = streets.value.sort((a: IStreet, b: IStreet) => (a?.ord || 0) - (b?.ord || 0));
+    } else if (val === 2) {
         console.log('qty');
         streets.value = streets.value.sort((a: IStreet, b: IStreet) => (b?.qty || 0) - (a?.qty || 0));
     } else {
@@ -111,7 +122,31 @@ onBeforeMount(async () => {
         streets.value = list;
     }
 
-    // console.log(list);
+
+    const names = {} as keyable;
+    list.forEach((x: IStreet) => {
+        if (x.CECHA === 'ul.') {
+            streetNum.value += 1;
+            if (x?.NAZWA_2) {
+                extended.value += 1
+                const key = x.NAZWA_2;
+                names[key] ? names[key] += 1 : names[key] = 1;
+            }
+        }
+    });
+
+    namesStats.value = names;
+
+    Object.entries(namesStats.value).filter((x: any) => x[1] > 10).map(x => console.log(x));
+
+    const counter = {} as keyable;
+    list.forEach((x: IStreet) => {
+        const key = String(x.ord);
+        counter[key] ? counter[key] += 1 : counter[key] = 1;
+    });
+    ranks.value = counter;
+
+
     const getName = (item: IStreet) => (item.CECHA === 'ul.' ? 'ulica ' : '') + item.NAZWA_1;
 
     const longestStreets = list.filter((x: IStreet) => x.CECHA === 'ul.').sort(function (a: IStreet, b: IStreet) {
@@ -132,7 +167,10 @@ onBeforeMount(async () => {
 
     summary.value = Object.entries(streets.value.reduce((acc: any, { CECHA }) => ({ ...acc, [CECHA]: (acc[CECHA] || 0) + 1 }), {})).map(x => ({ title: x[0], qty: x[1] })).sort((a: any, b: any) => b.qty - a.qty);
     isLoaded.value = true;
-    store.renderBar(summary.value as [], 'title', 'qty', true);
+
+    const pop = Object.entries(ranks.value).map(x => ({ key: x[0], title: 'R' + x[0], qty: x[1] }));
+    store.renderBar('graph', summary.value as [], 'title', 'qty', true);
+    store.renderBar('pop', pop as [], 'title', 'qty', true, colors);
 
     const ontology = await store.api('ontology', {});
     const cats = {} as keyable;
@@ -152,16 +190,10 @@ onBeforeMount(async () => {
 
     catsDict.value = dict;
     catsMap.value = cats;
-
 });
-
 </script>
 
 <style scoped>
-:deep(.bar) {
-    fill: steelblue;
-}
-
 .place {
     text-transform: lowercase;
 }
