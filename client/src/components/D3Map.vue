@@ -214,7 +214,7 @@ const getRegions = async () => {
 
 const loadStreet = async () => {
   id.value = id.value || 0;
-  console.log('load street', id.value);
+  // console.log('call load street', id.value);
   if (vuerouter.name === 'Regions') {
     // console.log("load regions");
     await getGroups();
@@ -388,7 +388,7 @@ const loadPrevious = () => {
 };
 
 watch(() => props.place, async (selection, prevSelection) => {
-  // console.log(props.place, selection);
+  // console.log("props update", props.place, selection);
   await loadStreet();
 });
 
@@ -400,7 +400,7 @@ const animate = () => {
     myInterval.value = setInterval(function () {
       console.log("next");
       loadNext();
-    }, 2000);
+    }, 1000);
   }
 };
 
@@ -418,9 +418,9 @@ onMounted(async () => {
 });
 
 onBeforeRouteUpdate(async (to, from) => {
-  // console.log('route update', to.params);
-  id.value = Number(to.params.id) - 1;
-  loadStreet();
+  console.log('route update', to.params);
+  // id.value = Number(to.params.id) - 1;
+  // loadStreet();
 });
 </script>
 
