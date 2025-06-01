@@ -5,7 +5,7 @@
             <D3Map :place="id" />
         </div>
         <div>
-            <n-input-number @click="showPlace" v-model:value="id" clearable :min="1" />
+            <n-input-number @click="showPlace" v-model:value="id" clearable :min="1" @update:value="showPlace" />
             <!-- <n-space>
                 <span v-for="index in Array(500).keys()">
                     <n-button :type="route.fullPath !== `/regions/${index + 1}` ? 'default' : 'info'"
