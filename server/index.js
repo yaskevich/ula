@@ -199,11 +199,15 @@ app.get('/api/street/:name', async (req, res) => {
   const stats = Object.fromEntries(regions.map(item => [item.woj, item.qty]));
   const allCount = await db.get("SELECT count(*) as qty FROM ulic where nazwa_1 = ?", name);
   const result = await db.all("select woj as woj, count(NAZWA_1) as qty, round(100.0 * count(nazwa_1)/?) as pc from ulic where nazwa_1 = ? group by woj", allCount.qty, name);
+  const getPercent = (num, id) => {
+    const n = 100.0 * num / stats[id];
+    return n.toFixed(1 - Math.floor(Math.log(n) / Math.log(10)));
+  };
   const reply = {
     name,
     freq: allCount.qty,
-    regions: Object.fromEntries(result.map(item => [item.woj, [item.qty, (100.0 * item.qty / stats[item.woj]).toFixed(2), item.pc, stats[item.woj]]]))
-  }
+    regions: Object.fromEntries(result.map(item => [item.woj, [item.qty, getPercent(item.qty, item.woj), item.pc, stats[item.woj]]]))
+  };
   res.json(reply);
 });
 
