@@ -4,10 +4,8 @@
     <D3Map :street="street" />
     <div>
       <div v-for="(val, index) in stats">
-        <n-button text :type="route.fullPath !== `/country/${index + 1}` ? 'default' : 'info'"
-          @click="showName(index, val.name)">{{
-            id > 500 ? index + 1 + id - 50 : index
-          }}. {{ val.name }}</n-button>
+        <n-button text :type="getId(index) === id + 1 ? 'info' : 'default'" @click="showName(index, val.name)">{{
+          getId(index) }}. {{ val.name }}</n-button>
       </div>
     </div>
   </n-space>
@@ -30,6 +28,8 @@ const route = useRoute();
 const stats = ref();
 const street = ref('');
 const id = ref(Number(toRaw(route?.params?.id)) - 1 || 0);
+
+const getId = (idx: number) => id.value > 500 ? idx + 1 + id.value - 10 : idx + 1;
 
 const showName = (index: number, name: string) => {
   router.push(`/country/${index + 1}`);
