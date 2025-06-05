@@ -39,6 +39,10 @@ interface IStreet {
   CECHA: string;
   NAZWA_1: string;
   NAZWA_2?: string;
+  qty?: number;
+  ord: number;
+  ttl: number;
+  rank: number;
 }
 
 
