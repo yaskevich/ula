@@ -419,8 +419,8 @@ onMounted(async () => {
 
 onBeforeRouteUpdate(async (to, from) => {
   console.log('route update', to.params);
-  // id.value = Number(to.params.id) - 1;
-  // loadStreet();
+  id.value = Number(to.params.id) - 1;
+  loadStreet();
 });
 </script>
 
