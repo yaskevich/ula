@@ -3,6 +3,12 @@
   <n-space>
     <D3Map :street="street" />
     <div>
+      <n-button @click="loadUp" :disabled="id < 2">
+        <template #icon>
+          <n-icon :component="ArrowUp" />
+        </template>
+      </n-button>
+
       <div v-for="(val, index) in stats">
         <n-button text :type="(val.rank === id) ? 'info' : 'default'" @click="showName(val.rank, val.name)">{{
           val.rank }}. {{ val.name }}</n-button>
@@ -20,6 +26,8 @@
 <script setup lang="ts">
 import { onBeforeMount, ref, toRaw } from 'vue';
 import { useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router';
+import { ArrowUp, ArrowDown } from '@vicons/carbon';
+
 import D3Map from './D3Map.vue';
 import store from '../store';
 
@@ -44,6 +52,11 @@ const getNames = async () => {
   }
   stats.value = data;
   street.value = data.find((x: any) => x.rank === (id.value + 1))?.name;
+};
+
+const loadUp = async () => {
+  id.value -= 1;
+  await getNames();
 };
 
 onBeforeRouteUpdate(async (to, from) => {
