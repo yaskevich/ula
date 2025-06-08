@@ -3,14 +3,16 @@
   <n-space>
     <D3Map :street="street" />
     <div>
-      <n-button @click="loadUp" :disabled="id < 2">
-        <template #icon>
-          <n-icon :component="ArrowUp" />
-        </template>
-      </n-button>
-
+      <n-space>
+        <n-button @click="loadUp" :disabled="id < 2">
+          <template #icon>
+            <n-icon :component="ArrowUp" />
+          </template>
+        </n-button>
+        <n-select v-model:value="upValue" :options="options" :consistent-menu-width="false" />
+      </n-space>
       <div v-for="(val, index) in stats">
-        <n-button text :type="(val.rank === id) ? 'info' : 'default'" @click="showName(val.rank, val.name)">{{
+        <n-button text :type="(val.rank === id + 1) ? 'info' : 'default'" @click="showName(val.rank, val.name)">{{
           val.rank }}. {{ val.name }}</n-button>
       </div>
     </div>
@@ -27,7 +29,6 @@
 import { onBeforeMount, ref, toRaw } from 'vue';
 import { useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router';
 import { ArrowUp, ArrowDown } from '@vicons/carbon';
-
 import D3Map from './D3Map.vue';
 import store from '../store';
 
@@ -36,8 +37,8 @@ const route = useRoute();
 const stats = ref();
 const street = ref('');
 const id = ref(Number(toRaw(route?.params?.id)) - 1 || 0);
-
-const getId = (idx: number) => id.value > 500 ? idx + 1 + id.value - 10 : idx + 1;
+const options = [10, 50, 100, 1000].map((x: number) => ({ value: x, label: x }));
+const upValue = ref(options[0].value);
 
 const showName = (index: number, name: string) => {
   router.push(`/country/${index}`);
@@ -55,7 +56,7 @@ const getNames = async () => {
 };
 
 const loadUp = async () => {
-  id.value -= 1;
+  id.value -= upValue.value;
   await getNames();
 };
 
