@@ -12,9 +12,17 @@
         <n-select v-model:value="upValue" :options="options" :consistent-menu-width="false" />
       </n-space>
       <div v-for="(val, index) in stats">
-        <n-button text :type="(val.rank === id + 1) ? 'info' : 'default'" @click="showName(val.rank, val.name)">{{
+        <n-button text :type="(val.rank === id) ? 'info' : 'default'" @click="showName(val.rank, val.name)">{{
           val.rank }}. {{ val.name }}</n-button>
       </div>
+      <n-space>
+        <n-button @click="loadDown">
+          <template #icon>
+            <n-icon :component="ArrowDown" />
+          </template>
+        </n-button>
+        <n-select v-model:value="downValue" :options="options" :consistent-menu-width="false" />
+      </n-space>
     </div>
   </n-space>
   <!--
@@ -39,6 +47,7 @@ const street = ref('');
 const id = ref(Number(toRaw(route?.params?.id)) - 1 || 0);
 const options = [10, 50, 100, 1000].map((x: number) => ({ value: x, label: x }));
 const upValue = ref(options[0].value);
+const downValue = ref(options[0].value);
 
 const showName = (index: number, name: string) => {
   router.push(`/country/${index}`);
@@ -47,7 +56,7 @@ const showName = (index: number, name: string) => {
 };
 
 const getNames = async () => {
-  const data = await store.api('names/' + id.value);
+  const data = await store.api('names/' + id.value + '/' + 25);
   if (id.value === -1) {
     id.value = 0;
   }
@@ -59,6 +68,12 @@ const loadUp = async () => {
   id.value -= upValue.value;
   await getNames();
 };
+
+const loadDown = async () => {
+  id.value += downValue.value;
+  await getNames();
+};
+
 
 onBeforeRouteUpdate(async (to, from) => {
   const num = Number(to.params?.id) || 1;
