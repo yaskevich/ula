@@ -4,7 +4,7 @@
     <D3Map :street="street" />
     <div>
       <n-space>
-        <n-button @click="loadUp" :disabled="id < 2">
+        <n-button @click="loadUp" :disabled="id < upValue">
           <template #icon>
             <n-icon :component="ArrowUp" />
           </template>
@@ -44,8 +44,8 @@ const router = useRouter();
 const route = useRoute();
 const stats = ref();
 const street = ref('');
-const id = ref(Number(toRaw(route?.params?.id)) - 1 || 0);
-const options = [10, 50, 100, 1000].map((x: number) => ({ value: x, label: x }));
+const id = ref(Number(toRaw(route?.params?.id)) || 0);
+const options = [25, 50, 100, 1000].map((x: number) => ({ value: x, label: x }));
 const upValue = ref(options[0].value);
 const downValue = ref(options[0].value);
 
@@ -55,33 +55,39 @@ const showName = (index: number, name: string) => {
   street.value = name;
 };
 
-const getNames = async () => {
-  const data = await store.api('names/' + id.value + '/' + 25);
+const getNames = async (addon: number, offset: number) => {
+  const data = await store.api('names/' + id.value + '/' + offset);
   if (id.value === -1) {
     id.value = 0;
   }
   stats.value = data;
-  street.value = data.find((x: any) => x.rank === (id.value + 1))?.name;
+  street.value = data.find((x: any) => x.rank === (id.value + addon))?.name;
 };
 
 const loadUp = async () => {
   id.value -= upValue.value;
-  await getNames();
+  if (id.value - upValue.value < 1) {
+    id.value = 1;
+  } else {
+    id.value -= upValue.value;
+  }
+  await getNames(1, upValue.value);
+  router.push(`/country/${id.value}`);
 };
 
 const loadDown = async () => {
   id.value += downValue.value;
-  await getNames();
+  await getNames(1, downValue.value);
+  router.push(`/country/${id.value}`);
 };
-
 
 onBeforeRouteUpdate(async (to, from) => {
   const num = Number(to.params?.id) || 1;
-  street.value = stats.value?.[num > 500 ? num - stats.value[0].rank : num - 1]?.name;
+  street.value = stats.value?.[num - stats.value[0].rank]?.name;
   console.log('top route update', to.params, num, street.value);
 });
 
-onBeforeMount(async () => await getNames());
+onBeforeMount(async () => await getNames(0, downValue.value));
 
 </script>
 
