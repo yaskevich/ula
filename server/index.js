@@ -211,10 +211,10 @@ app.get('/api/street/:name', async (req, res) => {
   res.json(reply);
 });
 
-app.get('/api/names{/:id}', async (req, res) => {
-  const lim = 500;
+app.get('/api/names{/:id}{/:lim}', async (req, res) => {
+  const lim = req.params.lim || 500;
   const id = Number(req.params.id);
-  const offset = id ? id < 50 ? 0 : (id - 50) : 0;
+  const offset = id ? id < lim ? 0 : (id - lim) : 0;
   const result = await db.all(`SELECT row_number() over (order by COUNT(nazwa_1) DESC) as 'rank', NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC LIMIT ${offset}, ${lim}`);
   res.json(result);
 });
