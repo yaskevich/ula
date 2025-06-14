@@ -31,6 +31,7 @@
         </n-button>
       </n-button-group>
       <n-button @click="animate">{{ myInterval ? 'Stop' : 'Run' }}</n-button>
+      <n-auto-complete v-model:value="autoValue" :options="options" placeholder="street name" />
     </n-space>
   </div>
 </template>
@@ -69,7 +70,10 @@ const streetObject = ref<IStreetInfo>();
 const myInterval = ref();
 const groups = ref();
 const regions = ref();
+const autoValue = ref('');
 
+
+const options = [{ label: 'test', value: "test" }];
 const getCounts = (hash: keyable, num: number | string) => hash?.[num] || [0, 0];
 const renderPercent = (x: number) => String(parseFloat(Number(x).toFixed(4)));
 
