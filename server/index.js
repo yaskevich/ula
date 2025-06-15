@@ -220,8 +220,9 @@ app.get('/api/names{/:id}{/:lim}', async (req, res) => {
 });
 
 app.get('/api/name', async (req, res) => {
-  const result = await db.all("SELECT * FROM (SELECT row_number() over (order by COUNT(nazwa_1) DESC) as 'rank', NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC) as subquery WHERE name = ?", req.query.name);
-  res.json(result.shift());
+  const query = req.query.name || req.query.chunk;
+  const result = await db.all("SELECT * FROM (SELECT row_number() over (order by COUNT(nazwa_1) DESC) as 'rank', NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC) as subquery WHERE name " + (req.query.name ? '= ?' : "LIKE '%'|| ? || '%'"), query);
+  res.json(req.query.name ? result.shift() : result);
 });
 
 app.get('/api/words', async (req, res) => {
