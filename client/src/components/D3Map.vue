@@ -31,7 +31,8 @@
         </n-button>
       </n-button-group>
       <n-button @click="animate">{{ myInterval ? 'Stop' : 'Run' }}</n-button>
-      <n-auto-complete v-model:value="autoValue" :options="options" placeholder="street name" />
+      <n-auto-complete v-model:value="autoValue" :options="options" placeholder="street name" @select="selectAuto"
+        @update:value="chooseAuto" />
     </n-space>
   </div>
 </template>
@@ -71,11 +72,23 @@ const myInterval = ref();
 const groups = ref();
 const regions = ref();
 const autoValue = ref('');
-
-
-const options = [{ label: 'test', value: "test" }];
+const options = ref([]);
 const getCounts = (hash: keyable, num: number | string) => hash?.[num] || [0, 0];
 const renderPercent = (x: number) => String(parseFloat(Number(x).toFixed(4)));
+
+const selectAuto = (rank: number) => {
+  console.log('selected', rank, options.value.find((x: any) => x.rank === rank));
+  router.push(`/country/${rank}`);
+};
+
+const chooseAuto = async (chunk: string) => {
+  if (chunk?.length > 3) {
+    // console.log(chunk);
+    const data = await store.api('name', { chunk });
+    // console.log(data);
+    options.value = data.map((x: any) => ({ ...x, label: x.name, value: x.rank }));
+  }
+};
 
 const showHideCaptions = (checked: boolean) => {
   d3.selectAll('.captions').classed('hidden', !checked);
