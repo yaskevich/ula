@@ -3,13 +3,14 @@
   <n-space>
     <D3Map :street="street" />
     <div>
+      <n-select v-model:value="batchValue" :options="options" :consistent-menu-width="false" />
       <n-space>
-        <n-button @click="loadUp" :disabled="id < upValue">
+
+        <n-button @click="loadUp" :disabled="id < batchValue">
           <template #icon>
             <n-icon :component="ArrowUp" />
           </template>
         </n-button>
-        <n-select v-model:value="upValue" :options="options" :consistent-menu-width="false" />
       </n-space>
       <div v-for="(val, index) in stats">
         <n-button text :type="(val.rank === id) ? 'info' : 'default'" @click="showName(val.rank, val.name)">{{
@@ -21,7 +22,7 @@
             <n-icon :component="ArrowDown" />
           </template>
         </n-button>
-        <n-select v-model:value="downValue" :options="options" :consistent-menu-width="false" />
+        <!-- <n-select v-model:value="downValue" :options="options" :consistent-menu-width="false" /> -->
       </n-space>
     </div>
   </n-space>
@@ -46,7 +47,7 @@ const stats = ref();
 const street = ref('');
 const id = ref(Number(toRaw(route?.params?.id)) || 0);
 const options = [25, 50, 100, 1000].map((x: number) => ({ value: x, label: x }));
-const upValue = ref(options[0].value);
+const batchValue = ref(options[0].value);
 const downValue = ref(options[0].value);
 
 const showName = (index: number, name: string) => {
@@ -65,24 +66,24 @@ const getNames = async (addon: number, offset: number) => {
 };
 
 const loadUp = async () => {
-  id.value -= upValue.value;
-  if (id.value - upValue.value < 1) {
+  id.value -= batchValue.value;
+  if (id.value - batchValue.value < 1) {
     id.value = 1;
   } else {
-    id.value -= upValue.value;
+    id.value -= batchValue.value;
   }
-  await getNames(1, upValue.value);
   router.push(`/country/${id.value}`);
 };
 
 const loadDown = async () => {
-  id.value += downValue.value;
-  await getNames(1, downValue.value);
+  id.value += batchValue.value;
   router.push(`/country/${id.value}`);
 };
 
 onBeforeRouteUpdate(async (to, from) => {
   const num = Number(to.params?.id) || 1;
+  id.value = num;
+  await getNames(1, batchValue.value);
   street.value = stats.value?.[num - stats.value[0].rank]?.name;
   console.log('top route update', to.params, num, street.value);
 });
