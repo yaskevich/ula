@@ -13,7 +13,9 @@
                         {{ index + 1 }}</n-button>
                 </span>
             </n-space> -->
+
         </div>
+        <n-button @click="$router.push('/country/' + id)">Go to Top</n-button>
     </n-space>
 </template>
 
