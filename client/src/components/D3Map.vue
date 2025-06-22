@@ -31,8 +31,8 @@
         </n-button>
       </n-button-group>
       <n-button @click="animate">{{ myInterval ? 'Stop' : 'Run' }}</n-button>
-      <n-auto-complete v-model:value="autoValue" :options="options" placeholder="street name" @select="selectAuto"
-        @update:value="chooseAuto" />
+      <n-auto-complete v-if="vuerouter.name === 'Top'" v-model:value="autoValue" :options="options"
+        placeholder="street name" @select="selectAuto" @update:value="chooseAuto" />
     </n-space>
   </div>
 </template>
