@@ -27,9 +27,10 @@
             <n-space justify="space-between" style="max-width:380px" v-if="(editMode && !val.parent?.id) || !editMode">
                 <n-button :text="route.fullPath !== `/country/${Number(index) + 1}`"
                     @click="router.push(`/country/${Number(index) + 1}`)">{{
-                        Number(index) + 1
+                        (Number(index) + 1) + page * limit
                     }}. {{ val.name }}</n-button>
                 <div>
+                    
                     <n-tag :type="val.parent?.title === '<unsorted>' ? 'error' : 'warning'" size="small"
                         v-if="val?.parent?.title">
                         {{ val.parent?.emoji }}
@@ -62,6 +63,7 @@ import { useRouter, useRoute } from 'vue-router';
 const showModal = ref(false);
 const router = useRouter();
 const route = useRoute();
+const page = Number(route.params.page) || 1;
 const limit = Number(route.params.limit) || 500;
 const editMode = ref(true);
 const stem = ref<IInfo>({ title: '', emoji: '', names: [], leaf: 1, en: '', id: null, parent: null, num: null });
@@ -102,7 +104,7 @@ const openModal = (id: number, name: string, item: IInfo) => {
 };
 
 const getNames = async () => {
-    stats.value = await store.api('names');
+    stats.value = await store.api(`names/${page}/${limit}`);
 };
 
 onBeforeMount(async () => {

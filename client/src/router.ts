@@ -33,7 +33,7 @@ const routes = [
     component: () => import('./components/Top.vue'),
   },
   {
-    path: '/list/:limit?',
+    path: '/list/:page?/:limit?',
     name: 'All',
     component: () => import('./components/All.vue'),
   },
