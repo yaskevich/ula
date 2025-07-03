@@ -19,10 +19,10 @@
     </n-modal>
     <!-- <h2>Analysis of the street names of Poland</h2> -->
     <div v-if="isLoaded">
-        <div class="p-4">
+        <n-space vertical>
             <n-switch v-model:value="editMode" />
-        </div>
-
+            <n-pagination v-model:page="page" :page-count="40000 / limit" @update:page="paginate" />
+        </n-space>
         <n-space vertical v-for="(val, index) in datum">
             <n-space justify="space-between" style="max-width:380px" v-if="(editMode && !val.parent?.id) || !editMode">
                 <n-button :text="route.fullPath !== `/country/${Number(index) + 1}`"
@@ -30,7 +30,7 @@
                         (Number(index) + 1) + page * limit
                     }}. {{ val.name }}</n-button>
                 <div>
-                    
+
                     <n-tag :type="val.parent?.title === '<unsorted>' ? 'error' : 'warning'" size="small"
                         v-if="val?.parent?.title">
                         {{ val.parent?.emoji }}
@@ -63,13 +63,34 @@ import { useRouter, useRoute } from 'vue-router';
 const showModal = ref(false);
 const router = useRouter();
 const route = useRoute();
-const page = Number(route.params.page) || 1;
+const page = ref(Number(route.params.page) || 1);
 const limit = Number(route.params.limit) || 500;
 const editMode = ref(true);
 const stem = ref<IInfo>({ title: '', emoji: '', names: [], leaf: 1, en: '', id: null, parent: null, num: null });
 const datum = reactive({} as keyable);
 const stats = ref();
 const isLoaded = ref(false);
+
+const getNames = async () => {
+    stats.value = await store.api(`names/${page.value}/${limit}`);
+    const fetched = await store.api('ontology');
+    fetched.forEach((x: any) => x.names = JSON.parse(x.names));
+
+    const chunk = stats.value.slice(0, limit);
+    for (const index in chunk) {
+        const val = chunk[index];
+        const cat = fetched?.find((x: any) => x.names?.includes(val.name));
+        const parent = fetched?.find((x: any) => x.id === cat?.parent);
+        datum[String(index)] = { name: val.name, qty: val.qty, parent, cat, key: index };
+    }
+};
+
+const paginate = async () => {
+    console.log(page.value);
+    await getNames();
+
+
+};
 
 const saveStem = async () => {
     showModal.value = false;
@@ -103,22 +124,11 @@ const openModal = (id: number, name: string, item: IInfo) => {
     }
 };
 
-const getNames = async () => {
-    stats.value = await store.api(`names/${page}/${limit}`);
-};
+
 
 onBeforeMount(async () => {
-    const fetched = await store.api('ontology');
-    fetched.forEach((x: any) => x.names = JSON.parse(x.names));
     await getNames();
     // console.log(stats.value);
-    const chunk = stats.value.slice(0, limit);
-    for (const index in chunk) {
-        const val = chunk[index];
-        const cat = fetched?.find((x: any) => x.names?.includes(val.name));
-        const parent = fetched?.find((x: any) => x.id === cat?.parent);
-        datum[String(index)] = { name: val.name, qty: val.qty, parent, cat, key: index };
-    }
     isLoaded.value = true;
 });
 
