@@ -27,10 +27,9 @@
             <n-space justify="space-between" style="max-width:380px" v-if="(editMode && !val.parent?.id) || !editMode">
                 <n-button :text="route.fullPath !== `/country/${Number(index) + 1}`"
                     @click="router.push(`/country/${Number(index) + 1}`)">{{
-                        (Number(index) + 1) + page * limit
+                        val.rank
                     }}. {{ val.name }}</n-button>
                 <div>
-
                     <n-tag :type="val.parent?.title === '<unsorted>' ? 'error' : 'warning'" size="small"
                         v-if="val?.parent?.title">
                         {{ val.parent?.emoji }}
@@ -76,20 +75,18 @@ const getNames = async () => {
     const fetched = await store.api('ontology');
     fetched.forEach((x: any) => x.names = JSON.parse(x.names));
 
-    const chunk = stats.value.slice(0, limit);
+    const chunk = stats.value;
     for (const index in chunk) {
         const val = chunk[index];
         const cat = fetched?.find((x: any) => x.names?.includes(val.name));
         const parent = fetched?.find((x: any) => x.id === cat?.parent);
-        datum[String(index)] = { name: val.name, qty: val.qty, parent, cat, key: index };
+        datum[String(index)] = { ...val, parent, cat, key: index };
     }
 };
 
 const paginate = async () => {
-    console.log(page.value);
+    router.push(`/list/${page.value}/${limit}`)
     await getNames();
-
-
 };
 
 const saveStem = async () => {
