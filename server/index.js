@@ -221,7 +221,12 @@ app.get('/api/names{/:page}{/:lim}', async (req, res) => {
   } else {
     offset = ((page) - 1) * lim;
   }
-  const result = await db.all(`SELECT row_number() over (order by COUNT(nazwa_1) DESC) as 'rank', NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC LIMIT ${offset}, ${lim}`);
+  const result = await db.all(`SELECT row_number() over (order by COUNT(nazwa_1) DESC) as 'rank', NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC LIMIT ? OFFSET ?`, [lim, offset]);
+  res.json(result);
+});
+
+app.get('/api/count', async (req, res) => {
+  const result = await db.get('SELECT DISTINCT COUNT(*) OVER() as ttl FROM ulic GROUP BY NAZWA_1');
   res.json(result);
 });
 
