@@ -21,7 +21,7 @@
     <div v-if="isLoaded">
         <n-space vertical>
             <n-switch v-model:value="editMode" />
-            <n-pagination v-model:page="page" :page-count="40000 / limit" @update:page="paginate" />
+            <n-pagination v-model:page="page" :page-count="Math.ceil(count / limit)" @update:page="paginate" />
         </n-space>
         <n-space vertical v-for="(val, index) in datum">
             <n-space justify="space-between" style="max-width:380px" v-if="(editMode && !val.parent?.id) || !editMode">
@@ -69,11 +69,15 @@ const stem = ref<IInfo>({ title: '', emoji: '', names: [], leaf: 1, en: '', id: 
 const datum = reactive({} as keyable);
 const stats = ref();
 const isLoaded = ref(false);
+const count = ref(0);
 
 const getNames = async () => {
     stats.value = await store.api(`names/${page.value}/${limit}`);
     const fetched = await store.api('ontology');
     fetched.forEach((x: any) => x.names = JSON.parse(x.names));
+
+    const data = await store.api('count');
+    count.value = data?.ttl || 0;
 
     const chunk = stats.value;
     for (const index in chunk) {
