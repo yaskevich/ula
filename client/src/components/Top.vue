@@ -57,7 +57,7 @@ const showName = (index: number, name: string) => {
 };
 
 const getNames = async (addon: number, offset: number) => {
-  const data = await store.api('names/' + id.value + '/' + offset);
+  const data = await store.api('names/' + 1 + '/' + offset, { id: id.value });
   if (id.value === -1) {
     id.value = 0;
   }
