@@ -77,6 +77,16 @@ const save = async (route: string, params: keyable) => {
     }
 };
 
+const toTree = (arr: any) => {
+    const obj = Object.create(null);
+    arr.forEach((x: any) => obj[x.id] = { ...x, });
+    const res: any = [];
+    arr.forEach((x: any) => {
+        x.parent ? (obj[x.parent]?.children ? obj[x.parent].children.push(obj[x.id]) : obj[x.parent].children = [obj[x.id]]) : res.push(obj[x.id])
+    });
+    return res;
+};
+
 export default {
     version: project?.version,
     git,
@@ -85,4 +95,5 @@ export default {
     save,
     state,
     renderBar,
+    toTree,
 };
