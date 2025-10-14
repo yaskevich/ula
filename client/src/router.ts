@@ -28,6 +28,11 @@ const routes = [
     component: () => import('./components/Places.vue'),
   },
   {
+    path: '/groups',
+    name: 'Groups',
+    component: () => import('./components/Groups.vue'),
+  },
+  {
     path: '/country/:id?',
     name: 'Top',
     component: () => import('./components/Top.vue'),
