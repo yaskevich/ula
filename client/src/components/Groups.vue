@@ -1,9 +1,15 @@
 <template>
-    Groups
     <div v-if="isLoaded">
-        <n-cascader v-model:value="value" :options="nodes" :filterable="true" label-field="title" value-field="id"
-            check-strategy="child" />
-        {{ nodes }}
+        <n-space>
+            <D3Map />
+            <div>
+                <h3>Groups</h3>
+                <n-cascader v-model:value="group" :options="nodes" :filterable="true" label-field="title"
+                    value-field="id" check-strategy="all" :cascade="true" :clearable="true" @update:value="update"
+                    style="max-width: 300px;" />
+                {{ group }}
+            </div>
+        </n-space>
     </div>
 </template>
 
@@ -15,7 +21,12 @@ import { useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router';
 const router = useRouter();
 const isLoaded = ref(false);
 const nodes = ref();
-const value = ref();
+const group = ref();
+
+const update = (value: any, option: any) => {
+    console.log(option);
+
+};
 
 onBeforeMount(async () => {
     const data = await store.api('ontology');
