@@ -193,6 +193,12 @@ app.get('/api/regions', async (req, res) => {
   res.json(Object.fromEntries(result.map(item => [item.woj, [item.qty, item.pc]])));
 });
 
+app.get('/api/groups', async (req, res) => {
+  const allCount = await db.get("SELECT count(*) as qty FROM ulic where nazwa_1 <> '' ");
+  const result = await db.all("SELECT ulic.woj, count(*) as qty, round(100.0 * count(*)/?) as pc FROM ontology, json_each(names) as j left join ulic on j.value = ulic.nazwa_1 where (ontology.id = ? or ontology.parent = ?) and ontology.leaf is true group by ulic.woj order by qty DESC", allCount.qty, req.query.id, req.query.id);
+  res.json(Object.fromEntries(result.map(item => [item.woj, [item.qty, item.pc]])));
+});
+
 app.get('/api/street/:name', async (req, res) => {
   const name = req.params.name;
   const regions = await db.all("SELECT woj as woj, count(woj) as qty FROM ulic WHERE nazwa_1 IS NOT NULL GROUP BY woj");
