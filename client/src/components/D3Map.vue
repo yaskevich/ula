@@ -8,7 +8,7 @@
         <text x="250" y="25" class="quantity">{{ num }}</text>
         <g v-if="vuerouter.name === 'Top'">
           <text x="0" y="410">🏅{{ id + 1 }} ({{ streetObject?.freq }})</text>
-          <text x="0" y="440" class="street">{{ streetObject?.name }}</text>
+          <text x="0" y="440" class="street">{{ streetObject?.meta?.title }}</text>
         </g>
       </svg>
     </div>
@@ -70,7 +70,7 @@ const svgRef = ref(null);
 const mapRef = ref<HTMLElement | null>(null);
 const streetObject = ref<IStreetInfo>();
 const myInterval = ref();
-const groups = ref();
+const series = ref();
 const regions = ref();
 const autoValue = ref('');
 const options = ref([]);
@@ -103,18 +103,20 @@ const chartClicked = async () => {
 
 const loadStreet = async () => {
   id.value = id.value || 0;
-  // console.log('call load street', id.value);
+  console.log(vuerouter.name, 'call load for id', id.value);
+  const streetMode = vuerouter.name === 'Top' || vuerouter.name === 'Groups';
   if (vuerouter.name === 'Regions') {
-    // console.log("load regions");
-    const data = await store.api('groups');
-    groups.value = data;
+    // console.log("loavuerouter.named regions");
+    series.value = await store.api('series')
   } else if (vuerouter.name === 'Top') {
     console.log(id.value, props.street);
     streetObject.value = await store.api('street/' + props.street);
+    console.log(streetObject.value);
+  } else if (vuerouter.name === 'Groups') {
+    streetObject.value = await store.api('groups/', { id: id.value });
   }
 
   let svg = d3.select(svgRef.value);
-
   svg.select(".carta").remove();
   const parentNode = d3.select(mapRef.value).node();
 
@@ -133,16 +135,14 @@ const loadStreet = async () => {
 
   const path = d3.geoPath().projection(projection);
 
-  const values = Object.values(vuerouter.name === 'Top' ? streetObject?.value?.regions : regions.value).map((x: any) => x[1]);
+  const values = Object.values(streetMode ? streetObject?.value?.regions : regions.value).map((x: any) => x[1]);
   const ext = d3.extent(values) as Array<number>;
   const last = ext[1];
 
   if (ext[0] !== undefined && ext[1] !== undefined) {
     const leftLim = Math.ceil(last);
     const colorize = d3.scaleLinear<string>().domain([0, last]).range(['#f1eef6', '#0570b0']);
-
     // const colorize = d3.scaleThreshold().domain(d3.ticks(0, leftLim, 5)).range(d3.schemeBlues[5] as any);
-
     legendCellWidth = (svgWidth.value - legendRightMargin) / last;
     const carta = svg.append("g").classed('carta', true);
     carta.append("g")
@@ -170,7 +170,7 @@ const loadStreet = async () => {
 
         // console.log(colorize(getCounts(regions.value, d.properties.terytId)[1]));
         // console.log(colorize(getCounts(regions.value, numid)[1]));
-        const obj = vuerouter.name === 'Top' ? streetObject?.value?.regions : regions.value;
+        const obj = streetMode ? streetObject?.value?.regions : regions.value;
         return colorize(getCounts(obj, numid)[1]);
       })
       .attr("d", path as any)
@@ -180,7 +180,7 @@ const loadStreet = async () => {
 
         if (vuerouter.name === 'Regions') {
           if (props?.place) {
-            num.value = groups.value[tid][props.place - 1]?.qty;
+            num.value = series.value[tid][props.place - 1]?.qty;
           }
         } else {
           const obj = vuerouter.name === 'Top' ? streetObject?.value?.regions : regions.value;
@@ -198,12 +198,11 @@ const loadStreet = async () => {
       if (vuerouter.name !== 'Regions') {
         return d.properties.nazwa;
       }
-      const regionData = groups.value[String(d.properties.terytId).padStart(2, '0')];
+      const regionData = series.value[String(d.properties.terytId).padStart(2, '0')];
       if (regionData?.length) {
         const idx = props.place || 1;
         const regionInfo = regionData?.[idx - 1];
         return regionInfo?.title;
-        // console.log(groups.value);
       } else {
         console.log('error');
       }
@@ -302,9 +301,8 @@ onMounted(async () => {
     id.value = 1;
     router.push(`/country/${id.value}`)
   }
-
-  const data = await store.api('regions');
-  regions.value = data;
+  console.log(vuerouter.name);
+  regions.value = await store.api('regions');
   await loadStreet();
 });
 
