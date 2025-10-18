@@ -25,7 +25,7 @@ const group = ref();
 
 const update = (value: any, option: any) => {
     console.log(option);
-
+    router.push(`/groups/${value}`);
 };
 
 onBeforeMount(async () => {

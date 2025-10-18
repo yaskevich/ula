@@ -25,7 +25,7 @@
             <router-link to="/country">Country top</router-link> |
             <router-link to="/regions">Regional tops</router-link> |
             <router-link to="/groups">Groups</router-link> |
-            <router-link to="/list/1/500">Full list</router-link> |
+            <router-link to="/list/1/1000">Full list</router-link> |
             <router-link to="/structure">Structure</router-link> |
             <router-link to="/places">Places</router-link> |
             <router-link to="/lexicon">Lexicon</router-link>
