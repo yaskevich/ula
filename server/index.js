@@ -23,10 +23,10 @@ const db = await open({ filename: path.join(process.env.DATA, 'data.db'), driver
 
 // await db.exec('CREATE TABLE IF NOT EXISTS ontology (id INTEGER PRIMARY KEY AUTOINCREMENT, emoji TEXT, title TEXT, en TEXT, names JSON, level INTEGER, parent INTEGER NOT NULL DEFAULT 0, leaf BOOLEAN DEFAULT(FALSE))');
 
-
 // import
 // delete from list where nazwa_1 is null;
 
+await db.exec('CREATE TABLE IF NOT EXISTS meta (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, ud JSON, udlow JSON, stems JSON)');
 await db.exec('CREATE TABLE IF NOT EXISTS morph (basis TEXT, word TEXT, pos1 TEXT, pos2 TEXT, formant TEXT, class TEXT)');
 await db.exec('CREATE TABLE IF NOT EXISTS ranking (sym_ul TEXT, rank INTEGER, qty INTEGER, name TEXT)');
 // insert into ranking (rank, sym_ul,name, qty) SELECT row_number() over (order by COUNT(nazwa_1) DESC) as 'rank', sym_ul, NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC;
@@ -172,7 +172,7 @@ app.get('/api/default', async (req, res) => {
   res.json(result?.shift());
 });
 
-app.get('/api/groups', async (req, res) => {
+app.get('/api/series', async (req, res) => {
   const result = await db.all("SELECT woj as region, nazwa_1 as title, count(nazwa_1) as qty FROM ulic WHERE title IS NOT NULL GROUP BY nazwa_1, woj ORDER BY count(nazwa_1) DESC");
   const hash = {};
   for (const item of result) {
@@ -194,23 +194,35 @@ app.get('/api/regions', async (req, res) => {
 });
 
 app.get('/api/groups', async (req, res) => {
-  const allCount = await db.get("SELECT count(*) as qty FROM ulic where nazwa_1 <> '' ");
-  const result = await db.all("SELECT ulic.woj, count(*) as qty, round(100.0 * count(*)/?) as pc FROM ontology, json_each(names) as j left join ulic on j.value = ulic.nazwa_1 where (ontology.id = ? or ontology.parent = ?) and ontology.leaf is true group by ulic.woj order by qty DESC", allCount.qty, req.query.id, req.query.id);
-  res.json(Object.fromEntries(result.map(item => [item.woj, [item.qty, item.pc]])));
+  const regions = await db.all("SELECT woj as woj, count(woj) as qty FROM ulic WHERE nazwa_1 IS NOT NULL GROUP BY woj");
+  const stats = Object.fromEntries(regions.map(item => [item.woj, item.qty]));
+  const meta = await db.get("SELECT * FROM ontology WHERE id = ?", req.query.id);
+  const getPercent = (num, id) => {
+    const n = 100.0 * num / stats[id];
+    return n.toFixed(1 - Math.floor(Math.log(n) / Math.log(10)));
+  };
+  const result = await db.all("SELECT ulic.woj as woj, count(*) as qty FROM ontology, json_each(names) as j left join ulic on j.value = ulic.nazwa_1 where (ontology.id = ? or ontology.parent = ?) and ontology.leaf is true group by ulic.woj order by qty DESC", req.query.id, req.query.id);
+  const reply = {
+    type: 'group',
+    meta,
+    regions: Object.fromEntries(result.map(item => [item.woj, [item.qty, getPercent(item.qty, item.woj), stats[item.woj]]]))
+  };
+  res.json(reply);
 });
 
 app.get('/api/street/:name', async (req, res) => {
-  const name = req.params.name;
+  const title = req.params.name;
   const regions = await db.all("SELECT woj as woj, count(woj) as qty FROM ulic WHERE nazwa_1 IS NOT NULL GROUP BY woj");
   const stats = Object.fromEntries(regions.map(item => [item.woj, item.qty]));
-  const allCount = await db.get("SELECT count(*) as qty FROM ulic where nazwa_1 = ?", name);
-  const result = await db.all("select woj as woj, count(NAZWA_1) as qty, round(100.0 * count(nazwa_1)/?) as pc from ulic where nazwa_1 = ? group by woj", allCount.qty, name);
+  const allCount = await db.get("SELECT count(*) as qty FROM ulic where nazwa_1 = ?", title);
+  const result = await db.all("select woj as woj, count(NAZWA_1) as qty, round(100.0 * count(nazwa_1)/?) as pc from ulic where nazwa_1 = ? group by woj", allCount.qty, title);
   const getPercent = (num, id) => {
     const n = 100.0 * num / stats[id];
     return n.toFixed(1 - Math.floor(Math.log(n) / Math.log(10)));
   };
   const reply = {
-    name,
+    type: 'name',
+    meta: { title },
     freq: allCount.qty,
     regions: Object.fromEntries(result.map(item => [item.woj, [item.qty, getPercent(item.qty, item.woj), item.pc, stats[item.woj]]]))
   };
