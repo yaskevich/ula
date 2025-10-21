@@ -42,6 +42,10 @@ const clean = (conll) => JSON.stringify(conll.split('\n').slice(7).filter(x => x
 
 const processNext = async () => {
     const unit = await db.get('SELECT ranking.name FROM ranking LEFT JOIN meta USING (name) WHERE id is NULL LIMIT 1');
+    if (unit === undefined) {
+        console.log("all done");
+        process.exit();
+    }
     console.log("ud", unit);
     const text = unit.name;
     const output = await udpipe(1, text, 'pol');
@@ -51,4 +55,24 @@ const processNext = async () => {
 
 // await processNext();
 
-setInterval(processNext, 1000);
+// setInterval(processNext, 1000);
+
+const units = await db.all("SELECT name, json_array_length(ud) as n, ud->0->>2 as lemma1, udlow->0->>2 as lemma2, udlow->0->>3 as pos FROM meta LIMIT 100");
+
+
+for (const item of units) {
+    if (item.n === 1 && item.name.endsWith('iego')) {
+        // console.log(item);
+    }
+}
+
+const result = await db.all('SELECT * from ontology');
+for (const item of result) {
+    if (item.names) {
+        for (const name of JSON.parse(item.names)) {
+            console.log(name, item.id);
+            await db.run("UPDATE meta SET stems = '[' || ? || ']' WHERE name = ?", item.id, name);
+        }
+        // 
+    }
+}
