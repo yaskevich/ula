@@ -30,7 +30,7 @@ const udpipe = async (id, data, lang) => {
 
 const db = await open({ filename: path.join(process.env.DATA, 'data.db'), driver: sqlite3.cached.Database });
 
-const list = (await db.all('SELECT * from ontology')).map(x => JSON.parse(x.names)).filter(x => x).flat();
+// const list = (await db.all('SELECT * from ontology')).map(x => JSON.parse(x.names)).filter(x => x).flat();
 // console.log(list);
 // for (const item of result) {
 // if (!list.includes(item.name)) {
@@ -54,25 +54,43 @@ const processNext = async () => {
 };
 
 // await processNext();
-
 // setInterval(processNext, 1000);
 
-const units = await db.all("SELECT name, json_array_length(ud) as n, ud->0->>2 as lemma1, udlow->0->>2 as lemma2, udlow->0->>3 as pos FROM meta LIMIT 100");
+// const result = await db.all('SELECT * from ontology');
+// for (const item of result) {
+//     if (item.names) {
+//         for (const name of JSON.parse(item.names)) {
+//             console.log(name, item.id);
+//             await db.run("UPDATE meta SET stems = '[' || ? || ']' WHERE name = ?", item.id, name);
+//         }
+//     }
+// }
+const cap = s => s && String(s[0]).toUpperCase() + String(s).slice(1);
 
+const units = await db.all("SELECT name, json_array_length(ud) as n, ud->0->>2 as lemma1, udlow->0->>2 as lemma2, udlow->0->>3 as pos FROM meta LIMIT 1000");
 
 for (const item of units) {
-    if (item.n === 1 && item.name.endsWith('iego')) {
-        // console.log(item);
-    }
-}
-
-const result = await db.all('SELECT * from ontology');
-for (const item of result) {
-    if (item.names) {
-        for (const name of JSON.parse(item.names)) {
-            console.log(name, item.id);
-            await db.run("UPDATE meta SET stems = '[' || ? || ']' WHERE name = ?", item.id, name);
+    if (item.n === 1) {
+        let stem = '';
+        let emoji = '';
+        let code = 0;
+        if (item.name.endsWith('iego')) {
+            stem = item.lemma1;
+            emoji = '🧔🏻';
+            code = 120;
+        } else if (item.name.endsWith('iej')) {
+            stem = item.name.slice(0, -3) + 'a';
+            emoji = '👧🏻';
+            code = 60;
         }
-        // 
+        if (stem) {
+            const info = await db.get('SELECT id FROM ontology WHERE title = ?', stem);
+            let stemId = info?.id;
+            if (!stemId) {
+                const result = await db.run("INSERT INTO ontology (emoji, title, en, parent, leaf) VALUES (?, ?, ?, ?, ?)", emoji, stem, stem, code, true);
+                stemId = result.lastID;
+            }
+            await db.run("UPDATE meta SET stems = '[' || ? || ']' WHERE name = ?", stemId, item.name);
+        }
     }
 }
