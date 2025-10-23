@@ -23,20 +23,20 @@
             <n-switch v-model:value="editMode" />
             <n-pagination v-model:page="page" :page-count="Math.ceil(count / limit)" @update:page="paginate" />
         </n-space>
-        <n-space vertical v-for="(val, index) in datum">
-            <n-space justify="space-between" style="max-width:380px" v-if="(editMode && !val.parent?.id) || !editMode">
+        <n-space vertical v-for="(val, index) in stats">
+            <n-space justify="space-between" style="max-width:380px" v-if="(editMode && !val.cat) || !editMode">
                 <n-button :text="route.fullPath !== `/country/${Number(index) + 1}`"
                     @click="router.push(`/country/${Number(index) + 1}`)">{{
                         val.rank
-                    }}. {{ val.name }}</n-button>
+                    }}. {{ val.name }} </n-button>
                 <div>
-                    <n-tag :type="val.parent?.title === '<unsorted>' ? 'error' : 'warning'" size="small"
-                        v-if="val?.parent?.title">
-                        {{ val.parent?.emoji }}
-                        {{ val.parent.title || '<error>' }}
+                    <n-tag :type="getParentProp(val.cat, 'title') === '<unsorted>' ? 'error' : 'warning'" size="small"
+                        v-if="getParentProp(val.cat, 'title')">
+                        {{ getParentProp(val.cat, 'emoji') }}
+                        {{ getParentProp(val.cat, 'title') || '<error>' }}
                     </n-tag>
-                    <n-tag type="info" size="small" v-if="val.cat?.id">
-                        {{ val.cat?.title }}
+                    <n-tag type="info" size="small" v-if="val.cat">
+                        {{ datum?.[val.cat]?.title }}
                     </n-tag>
                     <n-button v-else size="tiny" @click="openModal(Number(index), val.name, val.cat)">
                         Annotate
@@ -71,21 +71,14 @@ const stats = ref();
 const isLoaded = ref(false);
 const count = ref(0);
 
+const getParentProp = (itemId: number, feature: string) => datum?.[String([datum?.[itemId]?.parent])]?.[feature] || '';
+
 const getNames = async () => {
     stats.value = await store.api(`names/${page.value}/${limit}`);
-    const fetched = await store.api('ontology');
-    fetched.forEach((x: any) => x.names = JSON.parse(x.names));
-
+    const ontology = await store.api('ontology');
+    Object.assign(datum, ...(ontology.map((x: keyable) => ({ [x.id]: x }))));
     const data = await store.api('count');
     count.value = data?.ttl || 0;
-
-    const chunk = stats.value;
-    for (const index in chunk) {
-        const val = chunk[index];
-        const cat = fetched?.find((x: any) => x.names?.includes(val.name));
-        const parent = fetched?.find((x: any) => x.id === cat?.parent);
-        datum[String(index)] = { ...val, parent, cat, key: index };
-    }
 };
 
 const paginate = async () => {
@@ -102,8 +95,8 @@ const saveStem = async () => {
         if (response.status === 200 && stem?.value?.num) {
             const parent = await response.json();
             stem.value.id = data.lastID;
-            datum[stem.value.num]["cat"] = stem.value;
-            datum[stem.value.num]["parent"] = parent;
+            // datum[stem.value.num]["cat"] = stem.value;
+            // datum[stem.value.num]["parent"] = parent;
         }
     } else {
         console.error("topic saving error!");
