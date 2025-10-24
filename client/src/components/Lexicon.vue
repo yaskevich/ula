@@ -4,8 +4,9 @@
     </div>
 
     <div class="card flex justify-center">
-        <n-tree key-field="id" label-field="title" :render-prefix="renderPrefix" :data="nodeRefs" :draggable="editMode"
-            block-line :override-default-node-click-behavior="override" @drop="handleDrop"></n-tree>
+        <n-tree key-field="id" label-field="title" :render-prefix="renderPrefix" :render-suffix="renderSuffix"
+            :data="nodeRefs" :draggable="editMode" block-line :override-default-node-click-behavior="override"
+            @drop="handleDrop"></n-tree>
     </div>
     <n-modal :show="showModal">
         <div style="background-color: white; padding: .5rem; border-radius: 3px;">
@@ -25,7 +26,7 @@
 
 <script setup lang="ts">
 import { ref, onBeforeMount, h } from 'vue';
-import { NButton } from 'naive-ui';
+import { NButton, NTag } from 'naive-ui';
 import type { TreeDropInfo, TreeOption } from 'naive-ui';
 import type { TreeOverrideNodeClickBehavior } from 'naive-ui';
 import EmojiPicker from 'vue3-emoji-picker';
@@ -61,6 +62,10 @@ const openModal = (option: TreeOption) => {
 
 const renderPrefix = ({ option }: { option: TreeOption }) => {
     return h(NButton, { text: true, type: 'primary', onClick: () => { openModal(option) } }, { default: () => option.emoji });
+};
+
+const renderSuffix = ({ option }: { option: any /* TreeOption */ }) => {
+    return h(NTag, { bordered: false }, { default: () => (option?.emoji + (option?.children?.length || 0)) });
 };
 
 const handleDrop = async ({ node, dragNode, dropPosition, event }: TreeDropInfo) => {
