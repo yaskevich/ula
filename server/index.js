@@ -101,7 +101,7 @@ const getOntology = async () => {
   }
 };
 
-// await db.exec('CREATE TABLE ontology (id INTEGER PRIMARY KEY AUTOINCREMENT, emoji TEXT, title TEXT, en TEXT, names JSON, level INTEGER, parent INTEGER NOT NULL DEFAULT 0, leaf BOOLEAN DEFAULT(FALSE))');
+// await db.exec('CREATE TABLE ontology (id INTEGER PRIMARY KEY AUTOINCREMENT, emoji TEXT, title TEXT, en TEXT, level INTEGER, parent INTEGER NOT NULL DEFAULT 0, leaf BOOLEAN DEFAULT(FALSE))');
 // getOntology();
 
 // const pop = await db.all("SELECT NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC LIMIT 500");
@@ -145,19 +145,17 @@ app.use(history({
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.post('/api/topic', async (req, res) => {
-  // console.log(req.body);
   const result = req.body.id ?
     await db.run(
-      'UPDATE ontology SET emoji = ? , title = ?, en = ?, names = ?, parent = ? WHERE id = ?',
+      'UPDATE ontology SET emoji = ? , title = ?, en = ?, parent = ? WHERE id = ?',
       req.body.emoji,
       req.body.title,
       req.body.en,
-      req.body.names,
       req.body.parent,
       req.body.id
     ) : await db.run(
-      'INSERT INTO ontology (emoji, title, en, names, parent, leaf) VALUES (?, ?, ?, ?, ?, ?)',
-      req.body.emoji || getEmoji(), req.body.title, req.body.title, JSON.stringify(req.body.names), req.body.parent || 65, true
+      'INSERT INTO ontology (emoji, title, en, parent, leaf) VALUES (?, ?, ?, ?, ?)',
+      req.body.emoji || getEmoji(), req.body.title, req.body.title, req.body.parent || 65, true
     );
   res.json(result);
 });
@@ -239,7 +237,7 @@ app.get('/api/names{/:page}{/:lim}', async (req, res) => {
   } else {
     offset = ((page) - 1) * lim;
   }
-  const result = await db.all(`SELECT row_number() over (order by COUNT(nazwa_1) DESC) as 'rank', NAZWA_1 AS name, COUNT(nazwa_1) AS qty FROM ulic GROUP BY NAZWA_1 ORDER BY qty DESC LIMIT ? OFFSET ?`, [lim, offset]);
+  const result = await db.all(`SELECT ranking.*, json_array_length(meta.ud) as n, meta.stems->>0 as cat from ranking LEFT JOIN meta USING (name) ORDER BY qty DESC LIMIT ? OFFSET ?`, [lim, offset]);
   res.json(result);
 });
 
