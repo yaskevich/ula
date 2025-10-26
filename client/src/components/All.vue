@@ -1,16 +1,28 @@
 <template>
     <n-modal v-model:show="showModal">
-        <n-card style="width: 600px" title="Enter the stem" :bordered="false" size="huge" role="dialog"
-            aria-modal="true">
+        <n-card style="width: 600px" title="Select the group and enter the stem" :bordered="false" size="huge"
+            role="dialog" aria-modal="true">
             <template #header-extra>
                 <!-- Oops! -->
             </template>
-            <n-input-group>
-                <n-input @keyup.enter="saveStem" v-model:value="stem.title" type="text" placeholder="stem" />
-                <n-button @click="saveStem">
-                    Save
-                </n-button>
-            </n-input-group>
+            <n-space vertical>
+                <n-radio-group v-model:value="stem.parent" name="radiogroup">
+                    <n-space>
+                        <n-radio v-for="value in Object.values(datum).filter((x: any) => !x?.leaf)" :key="value.id"
+                            :value="value.id" :label="value.emoji + ' ' + value.title" />
+                    </n-space>
+                </n-radio-group>
+                <n-input-group>
+                    <n-button @click="hideModal" type="warning">
+                        Cancel
+                    </n-button>
+                    <n-input @keyup.enter="saveStem" v-model:value="stem.title" type="text" placeholder="stem" />
+
+                    <n-button @click="saveStem" :disabled="!stem?.parent" type="info">
+                        Save
+                    </n-button>
+                </n-input-group>
+            </n-space>
             <!-- <n-select v-model:value="multipleSelectValue" filterable tag :options="options" /> -->
             <template #footer>
                 <!-- Footer -->
@@ -65,7 +77,7 @@ const route = useRoute();
 const page = ref(Number(route.params.page) || 1);
 const limit = Number(route.params.limit) || 500;
 const editMode = ref(true);
-const stem = ref<IInfo>({ title: '', emoji: '', names: [], leaf: 1, en: '', id: null, parent: null, num: null });
+const stem = ref<IInfo>({ title: '', emoji: '', leaf: 1, en: '', id: null, parent: null, num: null, name: '' });
 const datum = reactive({} as keyable);
 const stats = ref();
 const isLoaded = ref(false);
@@ -87,38 +99,40 @@ const paginate = async () => {
 };
 
 const saveStem = async () => {
-    showModal.value = false;
-    // console.log(stem.value);
+    console.log(stem.value);
     const data = await store.save('topic', stem.value);
     if (data.changes === 1) {
-        const response = await fetch('/api/default');
-        if (response.status === 200 && stem?.value?.num) {
-            const parent = await response.json();
-            stem.value.id = data.lastID;
-            // datum[stem.value.num]["cat"] = stem.value;
-            // datum[stem.value.num]["parent"] = parent;
-        }
+        showModal.value = false;
+        stem.value = { title: '', emoji: '', leaf: 1, en: '', id: null, parent: null, num: null, name: '' };
+        // const response = await fetch('/api/default');
+        // if (response.status === 200 && stem?.value?.num) {
+        //     const parent = await response.json();
+        //     stem.value.id = data.lastID;
+        // datum[stem.value.num]["cat"] = stem.value;
+        // datum[stem.value.num]["parent"] = parent;
+        // }
     } else {
         console.error("topic saving error!");
     }
 };
 
+const hideModal = () => {
+    showModal.value = false;
+    stem.value.parent = null;
+};
+
 const openModal = (id: number, name: string, item: IInfo) => {
-    // console.log(item);
-    showModal.value = true;
-
     if (item === undefined) {
-        stem.value = { "id": null, "emoji": "", "title": "", "en": "", "names": [name], "parent": null, "leaf": 1, "num": id }
-    } else {
-        stem.value = item;
+        stem.value = { "id": null, "emoji": "", "title": "", "en": "", "parent": null, "leaf": 1, "num": id }
     }
-
     if (!stem.value?.title) {
         stem.value.title = name.toLowerCase();
     }
+    if (!stem.value?.name){
+        stem.value.name = name;
+    }
+    showModal.value = true;
 };
-
-
 
 onBeforeMount(async () => {
     await getNames();

@@ -145,7 +145,8 @@ app.use(history({
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.post('/api/topic', async (req, res) => {
-  const result = req.body.id ?
+  let id = req.body.id;
+  const result = id ?
     await db.run(
       'UPDATE ontology SET emoji = ? , title = ?, en = ?, parent = ? WHERE id = ?',
       req.body.emoji,
@@ -157,6 +158,10 @@ app.post('/api/topic', async (req, res) => {
       'INSERT INTO ontology (emoji, title, en, parent, leaf) VALUES (?, ?, ?, ?, ?)',
       req.body.emoji || getEmoji(), req.body.title, req.body.title, req.body.parent || 65, true
     );
+  id ||= result.lastID;
+  if (req.body.name && id) {
+    await db.run("UPDATE meta SET stems = '[' || ? || ']' WHERE name = ?", id, req.body.name);
+  }
   res.json(result);
 });
 
