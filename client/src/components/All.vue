@@ -8,7 +8,7 @@
             <n-space vertical>
                 <n-radio-group v-model:value="stem.parent" name="radiogroup">
                     <n-space>
-                        <n-radio v-for="value in Object.values(datum).filter((x: any) => !x?.leaf)" :key="value.id"
+                        <n-radio v-for="value in Object.values(ontology).filter((x: any) => !x?.leaf)" :key="value.id"
                             :value="value.id" :label="value.emoji + ' ' + value.title" />
                     </n-space>
                 </n-radio-group>
@@ -32,7 +32,14 @@
     <!-- <h2>Analysis of the street names of Poland</h2> -->
     <div v-if="isLoaded">
         <n-space vertical>
-            <n-switch v-model:value="editMode" />
+            <n-switch v-model:value="editMode">
+                <template #checked>
+                    {{stats.filter((x: any) => !x?.cat)?.length}}
+                </template>
+                <template #unchecked>
+                    {{ stats?.length }}
+                </template>
+            </n-switch>
             <n-pagination v-model:page="page" :page-count="Math.ceil(count / limit)" @update:page="paginate" />
         </n-space>
         <n-space vertical v-for="(val, index) in stats">
@@ -48,7 +55,7 @@
                         {{ getParentProp(val.cat, 'title') || '<error>' }}
                     </n-tag>
                     <n-tag type="info" size="small" v-if="val.cat">
-                        {{ datum?.[val.cat]?.title }}
+                        {{ ontology?.[val.cat]?.title }}
                     </n-tag>
                     <n-button v-else size="tiny" @click="openModal(Number(index), val.name, val.cat)">
                         Annotate
@@ -78,19 +85,19 @@ const page = ref(Number(route.params.page) || 1);
 const limit = Number(route.params.limit) || 500;
 const editMode = ref(true);
 const stem = ref<IInfo>({ title: '', emoji: '', leaf: 1, en: '', id: null, parent: null, num: null, name: '' });
-const datum = reactive({} as keyable);
+const ontology = reactive({} as keyable);
 const stats = ref();
 const isLoaded = ref(false);
 const count = ref(0);
 
-const getParentProp = (itemId: number, feature: string) => datum?.[String([datum?.[itemId]?.parent])]?.[feature] || '';
+const getParentProp = (itemId: number, feature: string) => ontology?.[String([ontology?.[itemId]?.parent])]?.[feature] || '';
 
 const getNames = async () => {
     stats.value = await store.api(`names/${page.value}/${limit}`);
-    const ontology = await store.api('ontology');
-    Object.assign(datum, ...(ontology.map((x: keyable) => ({ [x.id]: x }))));
-    const data = await store.api('count');
-    count.value = data?.ttl || 0;
+    const data1 = await store.api('ontology');
+    const data2 = await store.api('count');
+    Object.assign(ontology, ...(data1.map((x: keyable) => ({ [x.id]: x }))));
+    count.value = data2?.ttl || 0;
 };
 
 const paginate = async () => {
@@ -103,14 +110,11 @@ const saveStem = async () => {
     const data = await store.save('topic', stem.value);
     if (data.changes === 1) {
         showModal.value = false;
-        stem.value = { title: '', emoji: '', leaf: 1, en: '', id: null, parent: null, num: null, name: '' };
-        // const response = await fetch('/api/default');
-        // if (response.status === 200 && stem?.value?.num) {
-        //     const parent = await response.json();
-        //     stem.value.id = data.lastID;
-        // datum[stem.value.num]["cat"] = stem.value;
-        // datum[stem.value.num]["parent"] = parent;
-        // }
+        if (stem.value?.name) {
+            const current = stats.value.find((x: any) => x.name === stem.value.name);
+            current.cat = stem.value?.parent;
+            stem.value = { title: '', emoji: '', leaf: 1, en: '', id: null, parent: null, num: null, name: '' };
+        }
     } else {
         console.error("topic saving error!");
     }
@@ -128,7 +132,7 @@ const openModal = (id: number, name: string, item: IInfo) => {
     if (!stem.value?.title) {
         stem.value.title = name.toLowerCase();
     }
-    if (!stem.value?.name){
+    if (!stem.value?.name) {
         stem.value.name = name;
     }
     showModal.value = true;
