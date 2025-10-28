@@ -17,11 +17,14 @@
                         Cancel
                     </n-button>
                     <n-input @keyup.enter="saveStem" v-model:value="stem.title" type="text" placeholder="stem" />
-
                     <n-button @click="saveStem" :disabled="!stem?.parent" type="info">
                         Save
                     </n-button>
                 </n-input-group>
+                <div>
+                    <n-data-table v-if="optional?.length > 1" :columns="columns" :data="optional" size="small" />
+                    <n-tag type="success" v-else>{{ optional?.[0]?.['qty'] }}</n-tag>
+                </div>
             </n-space>
             <!-- <n-select v-model:value="multipleSelectValue" filterable tag :options="options" /> -->
             <template #footer>
@@ -89,6 +92,8 @@ const ontology = reactive({} as keyable);
 const stats = ref();
 const isLoaded = ref(false);
 const count = ref(0);
+const optional = ref([]);
+const columns = [{ title: 'Variant', key: 'prename' }, { title: 'Number', key: 'qty' },];
 
 const getParentProp = (itemId: number, feature: string) => ontology?.[String([ontology?.[itemId]?.parent])]?.[feature] || '';
 
@@ -125,7 +130,8 @@ const hideModal = () => {
     stem.value.parent = null;
 };
 
-const openModal = (id: number, name: string, item: IInfo) => {
+const openModal = async (id: number, name: string, item: IInfo) => {
+    optional.value = await store.api('optional', { name })
     if (item === undefined) {
         stem.value = { "id": null, "emoji": "", "title": "", "en": "", "parent": null, "leaf": 1, "num": id }
     }

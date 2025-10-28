@@ -156,8 +156,8 @@ app.post('/api/topic', async (req, res) => {
       req.body.id
     ) : await db.run(
       'INSERT INTO ontology (emoji, title, en, parent, leaf) VALUES (?, ?, ?, ?, ?)',
-      req.body.emoji || getEmoji(), req.body.title, req.body.title, req.body.parent || 65, true
-    );
+      req.body.emoji || getEmoji(), req.body.title, req.body.title, req.body.parent || 0, req.body.leaf
+    ); // 65
   id ||= result.lastID;
   if (req.body.name && id) {
     await db.run("UPDATE meta SET stems = '[' || ? || ']' WHERE name = ?", id, req.body.name);
@@ -303,6 +303,16 @@ app.get('/api/places', async (req, res) => {
   const result = await db.all(sql, Object.values(req.query));
   res.json(result);
 });
+
+app.get('/api/optional', async (req, res) => {
+  if (req.query.name) {
+    const result = await db.all('SELECT nazwa_2 as prename, count(nazwa_2) AS qty FROM ulic WHERE nazwa_1 = ? GROUP BY nazwa_2 ORDER BY qty DESC', req.query.name);
+    res.json(result);
+  } else {
+    res.json([]);
+  }
+});
+
 
 app.listen(port);
 console.log(`Backend is at port ${port}`);
