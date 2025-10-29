@@ -165,6 +165,17 @@ app.post('/api/topic', async (req, res) => {
   res.json(result);
 });
 
+app.get('/api/topics', async (req, res) => {
+  const chunk = req.query.chunk;
+  const result = await db.all(`SELECT * FROM ontology WHERE leaf IS TRUE ${chunk ? "AND title LIKE '[' || " + chunk + " || ']' " : ''} ORDER BY title`);
+  res.json(result);
+});
+
+app.post('/api/group', async (req, res) => {
+  const result = await db.run("UPDATE meta SET stems = '[' || ? || ']' WHERE name = ?", req.body.id, req.body.name);
+  res.json(result);
+});
+
 app.get('/api/ontology', async (req, res) => {
   const result = await db.all('SELECT * FROM ontology ORDER BY title');
   res.json(result);

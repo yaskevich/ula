@@ -10,6 +10,10 @@
                     <n-space>
                         <n-radio v-for="value in Object.values(ontology).filter((x: any) => !x?.leaf)" :key="value.id"
                             :value="value.id" :label="value.emoji + ' ' + value.title" />
+                        <n-radio key="group" :value="10000">
+                            <n-select v-model:value="autoValue" filterable :options="options" :clearable="true"
+                                @update:value="selectGroup" @focus="focusGroup" />
+                        </n-radio>
                     </n-space>
                 </n-radio-group>
                 <n-input-group>
@@ -17,7 +21,8 @@
                         Cancel
                     </n-button>
                     <n-input @keyup.enter="saveStem" v-model:value="stem.title" type="text" placeholder="stem" />
-                    <n-button @click="saveStem" :disabled="!stem?.parent" type="info">
+                    <n-button @click="saveStem" :disabled="!stem?.parent || (stem?.parent === 10000 && !autoValue)"
+                        type="info">
                         Save
                     </n-button>
                 </n-input-group>
@@ -94,6 +99,12 @@ const isLoaded = ref(false);
 const count = ref(0);
 const optional = ref([]);
 const columns = [{ title: 'Variant', key: 'prename' }, { title: 'Number', key: 'qty' },];
+const autoValue = ref();
+const options = ref([]);
+
+const focusGroup = () => {
+    stem.value.parent = 10000;
+};
 
 const getParentProp = (itemId: number, feature: string) => ontology?.[String([ontology?.[itemId]?.parent])]?.[feature] || '';
 
@@ -105,21 +116,32 @@ const getNames = async () => {
     count.value = data2?.ttl || 0;
 };
 
+const selectGroup = () => {
+    console.log("selected", autoValue.value);
+};
+
 const paginate = async () => {
     router.push(`/list/${page.value}/${limit}`)
     await getNames();
 };
 
 const saveStem = async () => {
-    console.log(stem.value);
-    const data = await store.save('topic', stem.value);
+    let data = {} as keyable;
+    let cat;
+    // console.log(stem.value, autoValue.value);
+    if (stem.value.parent === 10000) {
+        cat = options.value.find((x: any) => x.value === autoValue.value)?.['parent'];
+        data = await store.save('group', { name: stem.value.name, id: autoValue.value });
+    } else {
+        data = await store.save('topic', stem.value);
+        cat = stem.value?.parent;
+    }
     if (data.changes === 1) {
+        const current = stats.value.find((x: any) => x.name === stem.value.name);
+        current.cat = cat;
+        autoValue.value = null;
+        stem.value = { title: '', emoji: '', leaf: 1, en: '', id: null, parent: null, num: null, name: '' };
         showModal.value = false;
-        if (stem.value?.name) {
-            const current = stats.value.find((x: any) => x.name === stem.value.name);
-            current.cat = stem.value?.parent;
-            stem.value = { title: '', emoji: '', leaf: 1, en: '', id: null, parent: null, num: null, name: '' };
-        }
     } else {
         console.error("topic saving error!");
     }
@@ -127,11 +149,12 @@ const saveStem = async () => {
 
 const hideModal = () => {
     showModal.value = false;
-    stem.value.parent = null;
+    stem.value = { "id": null, "emoji": "", "title": "", "en": "", "parent": null, "leaf": 1, "num": null };
 };
 
 const openModal = async (id: number, name: string, item: IInfo) => {
-    optional.value = await store.api('optional', { name })
+    optional.value = await store.api('optional', { name });
+
     if (item === undefined) {
         stem.value = { "id": null, "emoji": "", "title": "", "en": "", "parent": null, "leaf": 1, "num": id }
     }
@@ -146,7 +169,9 @@ const openModal = async (id: number, name: string, item: IInfo) => {
 
 onBeforeMount(async () => {
     await getNames();
-    // console.log(stats.value);
+    const topics = await store.api('topics');
+    // console.log(topics);
+    options.value = topics?.map((x: any) => ({ label: x.title, value: x.id, parent: x.parent }));
     isLoaded.value = true;
 });
 
