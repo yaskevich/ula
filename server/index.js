@@ -215,21 +215,24 @@ app.get('/api/groups', async (req, res) => {
     const n = 100.0 * num / stats[id];
     return n.toFixed(1 - Math.floor(Math.log(n) / Math.log(10)));
   };
-  const result = await db.all("SELECT ulic.woj as woj, count(*) as qty FROM ontology, json_each(names) as j left join ulic on j.value = ulic.nazwa_1 where (ontology.id = ? or ontology.parent = ?) and ontology.leaf is true group by ulic.woj order by qty DESC", req.query.id, req.query.id);
+  //  select ulic.woj, j.value as cat, meta.name, ontology.title from ulic, json_each(meta.stems) as j join meta on ulic.nazwa_1 = meta.name join ontology on cat = ontology.id where ontology.parent = 120 limit 10;
+
+  const result = await db.all("SELECT ulic.woj as woj, count(*) AS qty FROM ulic, JSON_EACH(meta.stems) AS j JOIN meta ON ulic.nazwa_1 = meta.name JOIN ontology ON j.value = ontology.id WHERE (ontology.id = ? OR ontology.parent = ?) GROUP BY ulic.woj ORDER BY qty DESC", req.query.id, req.query.id);
+
   const reply = {
     type: 'group',
     meta,
-    regions: Object.fromEntries(result.map(item => [item.woj, [item.qty, getPercent(item.qty, item.woj), stats[item.woj]]]))
+    regions: Object.fromEntries(result.map(item => [item.woj, [item.qty, getPercent(item.qty, item.woj), 0, stats[item.woj]]]))
   };
   res.json(reply);
 });
 
-app.get('/api/street/:name', async (req, res) => {
-  const title = req.params.name;
+app.get('/api/street', async (req, res) => {
+  const title = req.query.name;
   const regions = await db.all("SELECT woj as woj, count(woj) as qty FROM ulic WHERE nazwa_1 IS NOT NULL GROUP BY woj");
   const stats = Object.fromEntries(regions.map(item => [item.woj, item.qty]));
   const allCount = await db.get("SELECT count(*) as qty FROM ulic where nazwa_1 = ?", title);
-  const result = await db.all("select woj as woj, count(NAZWA_1) as qty, round(100.0 * count(nazwa_1)/?) as pc from ulic where nazwa_1 = ? group by woj", allCount.qty, title);
+  const result = await db.all("select woj as woj, count(NAZWA_1) as qty from ulic where nazwa_1 = ? group by woj", title);
   const getPercent = (num, id) => {
     const n = 100.0 * num / stats[id];
     return n.toFixed(1 - Math.floor(Math.log(n) / Math.log(10)));
@@ -237,8 +240,7 @@ app.get('/api/street/:name', async (req, res) => {
   const reply = {
     type: 'name',
     meta: { title },
-    freq: allCount.qty,
-    regions: Object.fromEntries(result.map(item => [item.woj, [item.qty, getPercent(item.qty, item.woj), item.pc, stats[item.woj]]]))
+    regions: Object.fromEntries(result.map(item => [item.woj, [item.qty, getPercent(item.qty, item.woj), 0, stats[item.woj]]]))
   };
   res.json(reply);
 });

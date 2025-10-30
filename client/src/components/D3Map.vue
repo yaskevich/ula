@@ -6,8 +6,9 @@
       <svg ref="svgRef" :width="svgWidth" :height="svgHeight" style="font-family: 'Open Sans'">
         <text x="0" y="15" class="title">{{ unit }}</text>
         <text x="250" y="25" class="quantity">{{ num }}</text>
-        <g v-if="vuerouter.name === 'Top'">
-          <text x="0" y="410">🏅{{ id + 1 }} ({{ streetObject?.freq }})</text>
+        <g v-if="streetMode">
+          <text x="0" y="410" v-if="vuerouter.name === 'Top'">🏅{{ id + 1 }} ({{ streetObject?.freq }})</text>
+          <text x="0" y="410" v-else>{{ streetObject?.freq }}</text>
           <text x="0" y="440" class="street">{{ streetObject?.meta?.title }}</text>
         </g>
       </svg>
@@ -56,6 +57,7 @@ const vuerouter = useRoute();
 // console.log(vuerouter.name);
 const inId = Number(toRaw(vuerouter?.params?.id));
 const id = ref(inId > 0 ? inId - 1 : 0);
+const streetMode = ref(false);
 // console.log("requested", id.value);
 const svgWidth = ref(0);
 const svgHeight = ref(0);
@@ -104,16 +106,19 @@ const chartClicked = async () => {
 const loadStreet = async () => {
   id.value = id.value || 0;
   console.log(vuerouter.name, 'call load for id', id.value);
-  const streetMode = vuerouter.name === 'Top' || vuerouter.name === 'Groups';
+  streetMode.value = ['Top', 'Groups'].includes(String(vuerouter.name))
   if (vuerouter.name === 'Regions') {
-    // console.log("loavuerouter.named regions");
-    series.value = await store.api('series')
+    series.value = await store.api('series');
   } else if (vuerouter.name === 'Top') {
     console.log(id.value, props.street);
-    streetObject.value = await store.api('street/' + props.street);
+    streetObject.value = await store.api('street', { name: props.street });
     console.log(streetObject.value);
   } else if (vuerouter.name === 'Groups') {
-    streetObject.value = await store.api('groups/', { id: id.value });
+    streetObject.value = await store.api('groups', { id: id.value + 1 });
+    console.log(streetObject.value);
+  }
+  if (streetMode.value && streetObject?.value) {
+    streetObject.value.freq = Object.values(streetObject?.value?.regions).map((x: any) => x[0])?.reduce((b: number, a: number) => b + a, 0);
   }
 
   let svg = d3.select(svgRef.value);
@@ -134,8 +139,7 @@ const loadStreet = async () => {
     .translate([svgWidth.value >> 1, svgHeight.value >> 1]);
 
   const path = d3.geoPath().projection(projection);
-
-  const values = Object.values(streetMode ? streetObject?.value?.regions : regions.value).map((x: any) => x[1]);
+  const values = Object.values(streetMode.value ? streetObject?.value?.regions : regions.value).map((x: any) => x[1]);
   const ext = d3.extent(values) as Array<number>;
   const last = ext[1];
 
@@ -183,7 +187,7 @@ const loadStreet = async () => {
             num.value = series.value[tid][props.place - 1]?.qty;
           }
         } else {
-          const obj = vuerouter.name === 'Top' ? streetObject?.value?.regions : regions.value;
+          const obj = streetMode ? streetObject?.value?.regions : regions.value;
           const counts = getCounts(obj, tid);
           num.value = `${counts[0]} ≈ ${renderPercent(counts[1])}%`;
         }
