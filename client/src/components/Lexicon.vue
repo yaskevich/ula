@@ -1,6 +1,7 @@
 <template>
     <div class="p-4">
-        <n-switch v-model:value="editMode" />
+        <n-switch v-model:value="editMode" /> <n-button @click="openModal(undefined)">Add</n-button>
+
     </div>
 
     <div class="card flex justify-center">
@@ -15,7 +16,7 @@
                     <n-button @click="save" type="success">Save</n-button>
                     <n-button @click="showModal = false" type="info">Close</n-button>
                 </n-space>
-                <n-input v-model:value="selected.title" v-if="selected?.title"></n-input>
+                <n-input v-model:value="selected!.title"></n-input>
                 <!-- {{ selected }} -->
                 <EmojiPicker :native="true" @select="onSelectEmoji" disable-skin-tones />
             </n-space>
@@ -42,7 +43,7 @@ const selected = ref<TreeOption>();
 const save = async () => {
     showModal.value = false;
     if (selected.value) {
-        const result = store.save('topic', selected.value);
+        const result = await store.save('topic', selected.value);
         console.log(result);
     }
 };
@@ -55,9 +56,13 @@ const onSelectEmoji = async (emoji: any) => {
     }
 };
 
-const openModal = (option: TreeOption) => {
+const openModal = (option: TreeOption | undefined) => {
     showModal.value = true;
-    selected.value = option;
+    if (option) {
+        selected.value = option;
+    } else {
+        selected.value = { title: '', emoji: '', leaf: 0 }
+    }
 };
 
 const renderPrefix = ({ option }: { option: TreeOption }) => {
@@ -106,8 +111,7 @@ onBeforeMount(async () => {
     const data = await store.api('ontology');
     if (data?.length) {
         nodesList.value = data;
-        nodeRefs.value = store.toTree(data);
-        // console.log(nodeRefs.value);
+        nodeRefs.value = store.toTree(data).sort((a: any, b: any) => b?.children?.length - a?.children?.length); // b - a for reverse sort;
     } else {
         console.log("fetching error");
     }
