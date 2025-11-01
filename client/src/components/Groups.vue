@@ -7,7 +7,6 @@
                 <n-cascader v-model:value="group" :options="nodes" :filterable="true" label-field="title"
                     value-field="id" check-strategy="all" :cascade="true" :clearable="true" @update:value="update"
                     style="max-width: 300px;" />
-                {{ group }}
             </div>
         </n-space>
     </div>
@@ -19,6 +18,7 @@ import store from '../store';
 import { useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router';
 
 const router = useRouter();
+const vuerouter = useRoute();
 const isLoaded = ref(false);
 const nodes = ref();
 const group = ref();
@@ -32,6 +32,12 @@ onBeforeMount(async () => {
     const data = await store.api('ontology');
     nodes.value = store.toTree(data);
     isLoaded.value = true;
+    let id = vuerouter?.params?.id;
+    if (!id) {
+        id = nodes.value[Math.floor(Math.random() * nodes.value.length)]?.id;
+        router.push(`groups/${id}`);
+    }
+    group.value = Number(id);
 });
 
 </script>
