@@ -7,7 +7,7 @@
         <text x="0" y="15" class="title">{{ unit }}</text>
         <text x="250" y="25" class="quantity">{{ num }}</text>
         <g v-if="streetMode">
-          <text x="0" y="410" v-if="vuerouter.name === 'Top'">🏅{{ id + 1 }} ({{ streetObject?.freq }})</text>
+          <text x="0" y="410" v-if="vuerouter.name === 'Top'">🏅{{ id || + 1 }} ({{ streetObject?.freq }})</text>
           <text x="0" y="410" v-else>{{ streetObject?.freq }}</text>
           <text x="0" y="440" class="street">{{ streetObject?.meta?.title }}</text>
         </g>
@@ -56,7 +56,7 @@ const props = defineProps({
 const vuerouter = useRoute();
 // console.log(vuerouter.name);
 const inId = Number(toRaw(vuerouter?.params?.id));
-const id = ref(inId > 0 ? inId - 1 : 0);
+const id = ref(inId > 0 ? inId : 0);
 const streetMode = ref(false);
 // console.log("requested", id.value);
 const svgWidth = ref(0);
@@ -114,7 +114,7 @@ const loadStreet = async () => {
     streetObject.value = await store.api('street', { name: props.street });
     console.log(streetObject.value);
   } else if (vuerouter.name === 'Groups') {
-    streetObject.value = await store.api('groups', { id: id.value + 1 });
+    streetObject.value = await store.api('groups', { id: id.value });
     console.log(streetObject.value);
   }
   if (streetMode.value && streetObject?.value) {
@@ -174,7 +174,7 @@ const loadStreet = async () => {
 
         // console.log(colorize(getCounts(regions.value, d.properties.terytId)[1]));
         // console.log(colorize(getCounts(regions.value, numid)[1]));
-        const obj = streetMode ? streetObject?.value?.regions : regions.value;
+        const obj = streetMode.value ? streetObject?.value?.regions : regions.value;
         return colorize(getCounts(obj, numid)[1]);
       })
       .attr("d", path as any)
@@ -187,7 +187,7 @@ const loadStreet = async () => {
             num.value = series.value[tid][props.place - 1]?.qty;
           }
         } else {
-          const obj = streetMode ? streetObject?.value?.regions : regions.value;
+          const obj = streetMode.value ? streetObject?.value?.regions : regions.value;
           const counts = getCounts(obj, tid);
           num.value = `${counts[0]} ≈ ${renderPercent(counts[1])}%`;
         }
@@ -195,7 +195,6 @@ const loadStreet = async () => {
       .on("mouseout", function () {
         unit.value = num.value = '';
       });
-
 
     const getRegionCaption = (d: any) => {
       // console.log(d);
@@ -276,7 +275,11 @@ const loadNext = () => {
 const loadPrevious = () => {
   if (id.value) {
     id.value -= 1;
-    router.push(`/country/${id.value}`);
+    if (vuerouter.name === 'Regions') {
+      router.push(`/regions/${id.value}`);
+    } else {
+      router.push(`/country/${id.value}`);
+    }
   }
 };
 
@@ -312,7 +315,7 @@ onMounted(async () => {
 
 onBeforeRouteUpdate(async (to, from) => {
   console.log('route update', to.params);
-  id.value = Number(to.params.id) - 1;
+  id.value = Number(to.params.id);
   loadStreet();
 });
 </script>
