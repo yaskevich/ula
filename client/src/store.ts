@@ -3,13 +3,32 @@ import * as d3 from 'd3';
 import { feature as topofeature } from 'topojson-client';
 import project from '../package.json';
 import topos from '../../data/poland.json';
+import type { NDateLocale, NLocale } from 'naive-ui';
 
 const geofeatures = (<any>topofeature((topos as any), (topos.objects.woj as any))).features;
 const git = project?.repository?.url ? 'https' + project.repository.url.slice(3, -4) : '';
 
 const state = reactive({
     exp: [] as Array<string>,
+    loc: 0,
+    locale: <NLocale | null>(null),
+    dateLocale: <NDateLocale | null>(null),
 });
+
+const dict = {
+    pages: {
+        "home": ["Home", "Start"],
+        "country": ["Country Top", "Kraj"],
+        "regions": ["Regional Tops", "Województwa"],
+        "groups": ["Groups", "Grupy"],
+        "list": ["Full list", "Pełna lista"],
+        "structure": ["Structure", "Struktura"],
+        "places": ["Places", "Miejscowości"],
+        "lexicon": ["Lexicon", "Słownik"],
+    }
+} as keyable;
+
+const t = (chapter: string, id: string) => dict?.[chapter]?.[id][Number(state?.loc) || 0];
 
 const renderBar = (id: string, data: [], keyName: string, valName: string, addKey = false, colorsMap?: keyable) => {
     if (data?.length) {
@@ -96,4 +115,5 @@ export default {
     state,
     renderBar,
     toTree,
+    t,
 };

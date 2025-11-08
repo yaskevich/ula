@@ -1,34 +1,32 @@
 <template>
   <n-back-top />
-  <n-config-provider :locale="locale" :date-locale="dateLocale">
+  <n-config-provider :locale="store.state.locale" :date-locale="store.state.dateLocale">
     <n-modal-provider>
       <div class="container">
         <div id="main">
           <div id="nav">
             <n-button @click="
               () => {
-                locale = null;
-                dateLocale = null
+                store.state.locale = null;
+                store.state.dateLocale = null;
+                store.state.loc = 0;
               }
             ">
               EN
             </n-button>
             <n-button @click="
               () => {
-                locale = plPL;
-                dateLocale = datePlPL
+                store.state.loc = 1;
+                store.state.locale = plPL;
+                store.state.dateLocale = datePlPL
               }
             ">
               PL
             </n-button>
-            <router-link to="/home">Home</router-link> |
-            <router-link to="/country">Country top</router-link> |
-            <router-link to="/regions">Regional tops</router-link> |
-            <router-link to="/groups">Groups</router-link> |
-            <router-link to="/list/1/1000">Full list</router-link> |
-            <router-link to="/structure">Structure</router-link> |
-            <router-link to="/places">Places</router-link> |
-            <router-link to="/lexicon">Lexicon</router-link>
+            <span v-for="(page, index) in pages">
+              <router-link :to="'/' + page">{{ store.t('pages', page) }}</router-link><span
+                v-show="index + 1 !== pages.length">|</span>
+            </span>
           </div>
         </div>
         <div class="content">
@@ -56,13 +54,9 @@
 
 <script setup lang="ts">
 import store from './store';
-import { onBeforeMount, onMounted, ref } from 'vue';
-import type { NDateLocale, NLocale } from 'naive-ui';
 import { datePlPL, plPL } from 'naive-ui';
 
-const locale = ref<NLocale | null>(null);
-const dateLocale = ref<NDateLocale | null>(null);
-
+const pages = ["home", "country", "regions", "groups", "list", "structure", "places", "lexicon"];
 </script>
 
 <style>
