@@ -1,8 +1,11 @@
 <template>
-    <div class="p-4">
+    <n-space>
         <n-switch v-model:value="editMode" /> <n-button @click="openModal(undefined)">Add</n-button>
-
-    </div>
+        <div style="max-width:100px">
+            <n-input-number v-model:value="top" clearable :show-button="false" :min="0" :step="100" :max="1000"
+                @update:value="getData" />
+        </div>
+    </n-space>
 
     <div class="card flex justify-center">
         <n-tree key-field="id" label-field="title" :render-prefix="renderPrefix" :render-suffix="renderSuffix"
@@ -39,6 +42,7 @@ const showModal = ref(false);
 const nodesList = ref();
 const nodeRefs = ref();
 const selected = ref<TreeOption>();
+const top = ref(0);
 
 const save = async () => {
     showModal.value = false;
@@ -107,15 +111,18 @@ const override: TreeOverrideNodeClickBehavior = ({ option }) => {
     return 'default'
 };
 
-onBeforeMount(async () => {
-    const data = await store.api('ontology');
+const getData = async () => {
+    // console.log(top.value);
+    const data = await store.api('ontology', { limit: top.value });
     if (data?.length) {
         nodesList.value = data;
-        nodeRefs.value = store.toTree(data).sort((a: any, b: any) => b?.children?.length - a?.children?.length); // b - a for reverse sort;
+        nodeRefs.value = store.toTree(data).sort((a: any, b: any) => (b?.children?.length || 0) - (a?.children?.length || 0)); // b - a for reverse sort;
     } else {
         console.log("fetching error");
     }
-});
+};
+
+onBeforeMount(async () => await getData());
 </script>
 
 <style>

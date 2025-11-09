@@ -177,7 +177,9 @@ app.post('/api/group', async (req, res) => {
 });
 
 app.get('/api/ontology', async (req, res) => {
-  const result = await db.all('SELECT * FROM ontology ORDER BY title');
+  const lim = Number(req.query.limit) || 0;
+  const addon = lim ? `WHERE leaf IS FALSE OR (leaf IS TRUE AND id IN (SELECT j.value from meta, json_each(meta.stems) as j join ranking on ranking.name = meta.name where rank <= ${lim}))` : '';
+  const result = await db.all(`SELECT * FROM ontology ${addon} ORDER BY title`);
   res.json(result);
 });
 
