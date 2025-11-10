@@ -48,7 +48,8 @@
                     {{ stats?.length }}
                 </template>
             </n-switch>
-            <n-pagination v-model:page="page" :page-count="Math.ceil(count / limit)" @update:page="paginate" />
+            <n-pagination v-model:page="page" v-model:page-size="pageSize" :page-count="Math.ceil(count / pageSize)"
+                show-size-picker @update:page="paginate" @update:page-size="paginate" :page-sizes="[100, 500, 1000]" />
         </n-space>
         <n-space vertical v-for="(val, index) in stats">
             <n-space justify="space-between" style="max-width:380px" v-if="(editMode && !val.cat) || !editMode">
@@ -101,6 +102,7 @@ const optional = ref([]);
 const columns = [{ title: 'Variant', key: 'prename' }, { title: 'Number', key: 'qty' },];
 const autoValue = ref();
 const options = ref([]);
+const pageSize = ref(500);
 
 const focusGroup = () => {
     stem.value.parent = 10000;
@@ -109,7 +111,7 @@ const focusGroup = () => {
 const getParentProp = (itemId: number, feature: string) => ontology?.[String([ontology?.[itemId]?.parent])]?.[feature] || '';
 
 const getNames = async () => {
-    stats.value = await store.api(`names/${page.value}/${limit}`);
+    stats.value = await store.api(`names/${page.value}/${pageSize.value}`);
     const data1 = await store.api('ontology');
     const data2 = await store.api('count');
     Object.assign(ontology, ...(data1.map((x: keyable) => ({ [x.id]: x }))));
@@ -121,7 +123,8 @@ const selectGroup = () => {
 };
 
 const paginate = async () => {
-    router.push(`/list/${page.value}/${limit}`)
+    console.log(`/list/${page.value}/${pageSize.value}`);
+    router.push(`/list/${page.value}/${pageSize.value}`)
     await getNames();
 };
 
